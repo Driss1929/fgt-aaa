@@ -91,11 +91,21 @@
     <link rel="stylesheet" href="/src/index.css" />
 
     <style>
-      /* Inline fallback styles for standalone single-file execution */
+      /* Inline fallback styles for standalone single-file execution & Netlify mobile viewport lock */
       :root {
         --uiz-blue: #0f2942;
         --taroudant-ochre: #d97742;
         --taroudant-gold: #f59e0b;
+      }
+      html, body {
+        max-width: 100%;
+        width: 100%;
+        overflow-x: clip;
+        position: relative;
+      }
+      main, section, footer {
+        max-width: 100%;
+        overflow-x: hidden;
       }
       @keyframes floatSlow {
         0%, 100% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
@@ -109,6 +119,16 @@
       .floating-blob-1 { animation: floatSlow 14s ease-in-out infinite; }
       .floating-blob-2 { animation: floatReverse 18s ease-in-out infinite; }
       .floating-blob-3 { animation: floatSlow 22s ease-in-out infinite reverse; }
+      .reveal-item {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+        transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1),
+                    transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .js-reveal-ready .reveal-item:not(.is-visible) { opacity: 0; }
+      .js-reveal-ready .reveal-fade-up:not(.is-visible) { transform: translate3d(0, 24px, 0); }
+      .js-reveal-ready .reveal-zoom-in:not(.is-visible) { transform: scale(0.96); }
+      .js-reveal-ready .reveal-slide-left:not(.is-visible) { transform: translate3d(0, 20px, 0); }
       .card-3d {
         transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
                     box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
@@ -128,7 +148,7 @@
     </style>
   </head>
 
-  <body class="bg-[#f8fafc] dark:bg-[#071320] text-slate-900 dark:text-slate-100 antialiased selection:bg-[#d97742]/20 selection:text-[#d97742]">
+  <body class="w-full max-w-full overflow-x-clip bg-[#f8fafc] dark:bg-[#071320] text-slate-900 dark:text-slate-100 antialiased selection:bg-[#d97742]/20 selection:text-[#d97742]">
     <!-- ==================== STICKY HEADER (GLASSMORPHISM) ==================== -->
     <header
       id="top-header"
@@ -251,7 +271,7 @@
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-stretch">
             <!-- Main Column: Institutional Copy, Slogans, Instant Search & Action Buttons -->
-            <div class="lg:col-span-12 max-w-4xl flex flex-col justify-between space-y-6">
+            <div class="lg:col-span-12 min-w-0 max-w-4xl flex flex-col justify-between space-y-6">
               <div class="space-y-4">
                 <p class="text-xs sm:text-sm font-medium tracking-widest uppercase text-[#f59e0b]">
                   Université Ibn Zohr · Faculté d'Économie et de Gestion de Taroudant · Année Universitaire 2026-2027
@@ -328,20 +348,20 @@
               </div>
 
               <!-- Primary & Secondary Hero Action Buttons -->
-              <div class="flex flex-wrap items-center gap-4 pt-2">
+              <div class="flex flex-wrap items-center gap-3 sm:gap-4 pt-2">
                 <a
                   href="#parcours"
-                  class="btn-glow px-6 py-3.5 rounded-xl bg-[#d97742] hover:bg-[#c26330] text-white font-semibold text-sm sm:text-base flex items-center gap-3 shadow-lg whitespace-nowrap shrink-0"
+                  class="btn-glow w-full sm:w-auto justify-center text-center px-5 sm:px-6 py-3.5 rounded-xl bg-[#d97742] hover:bg-[#c26330] text-white font-semibold text-sm sm:text-base flex items-center gap-3 shadow-lg sm:whitespace-nowrap"
                 >
                   <span>Démarrer mon Passeport d'Intégration</span>
-                  <i class="fa-solid fa-arrow-right text-xs" aria-hidden="true"></i>
+                  <i class="fa-solid fa-arrow-right text-xs shrink-0" aria-hidden="true"></i>
                 </a>
 
                 <a
                   href="#filieres"
-                  class="px-5 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium text-sm sm:text-base transition-colors flex items-center gap-2.5 whitespace-nowrap shrink-0"
+                  class="w-full sm:w-auto justify-center text-center px-4 sm:px-5 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium text-sm sm:text-base transition-colors flex items-center gap-2.5 sm:whitespace-nowrap"
                 >
-                  <i class="fa-solid fa-file-pdf text-amber-300 text-sm" aria-hidden="true"></i>
+                  <i class="fa-solid fa-file-pdf text-amber-300 text-sm shrink-0" aria-hidden="true"></i>
                   <span>Fiches PDF des Formations (Licences &amp; Master)</span>
                 </a>
               </div>
@@ -816,8 +836,8 @@
             </div>
 
             <!-- Controls: Cycle Filter Segmented Control -->
-            <div class="flex flex-wrap items-center gap-3">
-              <div role="tablist" aria-label="Filtrer par cycle de formation" class="inline-flex items-center p-1 rounded-xl bg-slate-200/80 dark:bg-slate-800 border border-slate-300/60 dark:border-slate-700">
+            <div class="flex flex-wrap items-center gap-3 max-w-full">
+              <div role="tablist" aria-label="Filtrer par cycle de formation" class="inline-flex flex-wrap items-center gap-1 p-1 rounded-xl bg-slate-200/80 dark:bg-slate-800 border border-slate-300/60 dark:border-slate-700 max-w-full">
                 <button
                   type="button"
                   data-formation-filter="all"
@@ -917,7 +937,7 @@
                 <select
                   id="sim-program-select"
                   aria-label="Choisir une filière et un semestre"
-                  class="px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-[#0f2942] dark:text-amber-300 focus:outline-none focus:ring-2 focus:ring-[#d97742]"
+                  class="w-full sm:w-auto max-w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-[#0f2942] dark:text-amber-300 focus:outline-none focus:ring-2 focus:ring-[#d97742]"
                 >
                   <optgroup label="Tronc Commun Gestion (GEMD / MGE / ENDEB)">
                     <option value="tc-s1">Tronc Commun — Semestre 1 (7 Modules)</option>
@@ -4858,7 +4878,7 @@
 
           targets.forEach(function (el, idx) {
             el.classList.add('reveal-item');
-            const variant = idx % 3 === 0 ? 'reveal-fade-up' : idx % 3 === 1 ? 'reveal-zoom-in' : 'reveal-slide-left';
+            const variant = idx % 2 === 0 ? 'reveal-fade-up' : 'reveal-zoom-in';
             el.classList.add(variant);
             const rect = el.getBoundingClientRect();
             if (rect.top < window.innerHeight) {

@@ -19,13 +19,24 @@
   html {
     scroll-behavior: smooth;
     font-family: var(--font-sans);
+    max-width: 100%;
+    overflow-x: clip;
   }
 
   body {
     background-color: #f8fafc;
     color: #0f172a;
-    overflow-x: hidden;
+    max-width: 100%;
+    overflow-x: clip;
+    position: relative;
     transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  main,
+  section,
+  footer {
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
   html.dark body {
@@ -81,15 +92,15 @@
 }
 
 .js-reveal-ready .reveal-fade-up:not(.is-visible) {
-  transform: translate3d(0, 28px, 0);
+  transform: translate3d(0, 24px, 0);
 }
 
 .js-reveal-ready .reveal-zoom-in:not(.is-visible) {
-  transform: scale(0.95);
+  transform: scale(0.96);
 }
 
 .js-reveal-ready .reveal-slide-left:not(.is-visible) {
-  transform: translate3d(28px, 0, 0);
+  transform: translate3d(0, 20px, 0);
 }
 
 /* 3D Card hover elevation and subtle luminous border */
