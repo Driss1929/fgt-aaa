@@ -1,0 +1,146 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-uiz-blue: #0f2942;
+  --color-uiz-blue-light: #1a3f63;
+  --color-uiz-blue-dark: #081726;
+  --color-taroudant-ochre: #d97742;
+  --color-taroudant-ochre-dark: #b85d2b;
+  --color-taroudant-gold: #f59e0b;
+  --color-taroudant-sand: #fbf8f3;
+  --font-serif: 'Fraunces', 'Noto Sans Arabic', Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-sans: 'Plus Jakarta Sans', 'Noto Sans Arabic', 'Noto Sans Tifinagh', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    font-family: var(--font-sans);
+  }
+
+  body {
+    background-color: #f8fafc;
+    color: #0f172a;
+    overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  html.dark body {
+    background-color: #071320;
+    color: #f1f5f9;
+  }
+}
+
+/* Floating geometric blobs in Hero background */
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+  33% {
+    transform: translate3d(28px, -24px, 0) scale(1.06) rotate(4deg);
+  }
+  66% {
+    transform: translate3d(-20px, 18px, 0) scale(0.95) rotate(-4deg);
+  }
+}
+
+@keyframes floatReverse {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(-32px, -28px, 0) scale(1.08) rotate(-6deg);
+  }
+}
+
+.floating-blob-1 {
+  animation: floatSlow 14s ease-in-out infinite;
+}
+
+.floating-blob-2 {
+  animation: floatReverse 18s ease-in-out infinite;
+}
+
+.floating-blob-3 {
+  animation: floatSlow 22s ease-in-out infinite reverse;
+}
+
+/* Scroll reveal animations */
+.reveal-item {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.js-reveal-ready .reveal-item:not(.is-visible) {
+  opacity: 0;
+}
+
+.js-reveal-ready .reveal-fade-up:not(.is-visible) {
+  transform: translate3d(0, 28px, 0);
+}
+
+.js-reveal-ready .reveal-zoom-in:not(.is-visible) {
+  transform: scale(0.95);
+}
+
+.js-reveal-ready .reveal-slide-left:not(.is-visible) {
+  transform: translate3d(28px, 0, 0);
+}
+
+/* 3D Card hover elevation and subtle luminous border */
+.card-3d {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.25s ease;
+}
+
+.card-3d:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 38px -12px rgba(15, 41, 66, 0.14),
+              0 0 0 1px rgba(217, 119, 66, 0.35);
+}
+
+html.dark .card-3d:hover {
+  box-shadow: 0 20px 38px -12px rgba(0, 0, 0, 0.55),
+              0 0 0 1px rgba(245, 158, 11, 0.4);
+}
+
+/* Button glow & ripple micro-interaction */
+.btn-glow {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.2s ease,
+              background-color 0.2s ease;
+}
+
+.btn-glow:hover {
+  box-shadow: 0 10px 25px -5px rgba(217, 119, 66, 0.45);
+}
+
+.btn-glow:active {
+  transform: scale(0.98);
+}
+
+/* Tabular numbers for counters and dates */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-blob-1,
+  .floating-blob-2,
+  .floating-blob-3,
+  .reveal-item,
+  .card-3d {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}
