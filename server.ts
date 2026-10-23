@@ -565,7 +565,16 @@ async function startServer() {
     }
   });
 
-  if (process.env.NODE_ENV === 'production') {
+  app.get('/healthz', (_req, res) => {
+    res.status(200).send('ok');
+  });
+
+  const isProduction =
+    process.env.NODE_ENV === 'production' ||
+    Boolean(process.env.K_SERVICE) ||
+    process.env.npm_lifecycle_event === 'start';
+
+  if (isProduction) {
     const distPath = path.resolve(__dirname, 'dist');
     app.use(express.static(distPath));
     app.get('*', (_req, res) => {
