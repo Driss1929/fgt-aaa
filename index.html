@@ -3,20 +3,31 @@
   <head>
     <script>
       (function () {
+        // 1. Guard against extension errors (e.g., chrome-extension://...)
+        window.addEventListener('error', function (event) {
+          if (event && event.filename && (event.filename.indexOf('chrome-extension://') !== -1 || event.filename.indexOf('moz-extension://') !== -1)) {
+            event.preventDefault();
+            return true;
+          }
+        });
+
+        // 2. Ensure window.fetch has both a getter and setter so extensions/test runners assigning window.fetch do not throw TypeError
         try {
-          var originalFetch = window.fetch ? window.fetch.bind(window) : null;
-          var activeFetch = originalFetch;
+          var _rawFetch = window.fetch ? window.fetch.bind(window) : null;
+          var _currentFetch = _rawFetch;
           Object.defineProperty(window, 'fetch', {
             configurable: true,
             enumerable: true,
             get: function () {
-              return activeFetch;
+              return _currentFetch;
             },
-            set: function (fn) {
-              activeFetch = fn;
+            set: function (newFetch) {
+              _currentFetch = newFetch;
             }
           });
-        } catch (_e) {}
+        } catch (e) {
+          // In environments where window.fetch is already non-configurable, safely ignore
+        }
       })();
     </script>
     <meta charset="UTF-8" />
@@ -138,7 +149,7 @@
         </a>
 
         <!-- Zone 2: Concise Single-Line Navigation Links -->
-        <nav aria-label="Navigation principale" class="hidden lg:flex items-center gap-3 xl:gap-3.5 text-xs font-medium text-slate-600 dark:text-slate-300">
+        <nav aria-label="Navigation principale" class="hidden lg:flex items-center gap-2.5 xl:gap-3 text-xs font-medium text-slate-600 dark:text-slate-300">
           <a href="#accueil" class="hover:text-[#d97742] dark:hover:text-[#f59e0b] transition-colors whitespace-nowrap shrink-0 py-1 border-b-2 border-transparent hover:border-[#d97742]">Accueil</a>
           <a href="#etablissement" class="hover:text-[#d97742] dark:hover:text-[#f59e0b] transition-colors whitespace-nowrap shrink-0 py-1 border-b-2 border-transparent hover:border-[#d97742]">Présentation</a>
           <a href="#parcours" class="hover:text-[#d97742] dark:hover:text-[#f59e0b] transition-colors whitespace-nowrap shrink-0 py-1 border-b-2 border-transparent hover:border-[#d97742]">Parcours</a>
@@ -151,16 +162,27 @@
           <a href="#faq" class="hover:text-[#d97742] dark:hover:text-[#f59e0b] transition-colors whitespace-nowrap shrink-0 py-1 border-b-2 border-transparent hover:border-[#d97742]">FAQ</a>
         </nav>
 
-        <!-- Zone 3: Theme Switch & Mobile Menu Action -->
-        <div class="flex items-center gap-3 shrink-0">
+        <!-- Zone 3: Assistant Button, Theme Switch & Mobile Menu Action -->
+        <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+          <button
+            type="button"
+            onclick="window.toggleOfficialChat ? window.toggleOfficialChat(true) : null"
+            class="px-3 py-1.5 rounded-lg bg-[#d97742] hover:bg-[#c26330] text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+            title="Ouvrir l'Assistant IA Officiel UIZ • FEGT"
+          >
+            <i class="fa-solid fa-comments text-xs" aria-hidden="true"></i>
+            <span class="hidden sm:inline">Assistant IA</span>
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" aria-hidden="true"></span>
+          </button>
+
           <button
             id="theme-toggle-btn"
             type="button"
             aria-label="Basculer le mode sombre ou clair"
-            class="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-amber-400 hover:border-[#d97742] dark:hover:border-[#f59e0b] transition-colors flex items-center gap-2 text-xs font-semibold whitespace-nowrap shrink-0 cursor-pointer"
+            class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-amber-400 hover:border-[#d97742] dark:hover:border-[#f59e0b] transition-colors flex items-center gap-1.5 sm:gap-2 text-xs font-semibold whitespace-nowrap shrink-0 cursor-pointer"
           >
             <i id="theme-icon" class="fa-solid fa-moon text-sm" aria-hidden="true"></i>
-            <span id="theme-label">Mode Sombre</span>
+            <span id="theme-label" class="hidden sm:inline">Mode Sombre</span>
           </button>
 
           <button
@@ -168,7 +190,7 @@
             type="button"
             aria-label="Ouvrir le menu de navigation"
             aria-expanded="false"
-            class="lg:hidden p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            class="lg:hidden p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <i class="fa-solid fa-bars text-base" aria-hidden="true"></i>
           </button>
@@ -180,6 +202,17 @@
         id="mobile-menu-panel"
         class="hidden lg:hidden border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-[#091929]/95 backdrop-blur-md px-4 pt-3 pb-5 space-y-2"
       >
+        <button
+          type="button"
+          onclick="window.toggleOfficialChat ? window.toggleOfficialChat(true) : null; document.getElementById('mobile-menu-panel').classList.add('hidden');"
+          class="w-full text-left px-3 py-2.5 rounded-xl text-sm font-bold bg-[#d97742] text-white flex items-center justify-between shadow-sm cursor-pointer"
+        >
+          <span class="flex items-center gap-2">
+            <i class="fa-solid fa-comments text-sm" aria-hidden="true"></i>
+            <span>Assistant IA Officiel UIZ • FEGT • ENSSUP</span>
+          </span>
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" aria-hidden="true"></span>
+        </button>
         <a href="#accueil" class="mobile-nav-link block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">Accueil</a>
         <a href="#etablissement" class="mobile-nav-link block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">1. Mot de Bienvenue &amp; 2. Présentation FEGT</a>
         <a href="#parcours" class="mobile-nav-link block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">Parcours (Passeport 7 étapes)</a>
@@ -217,8 +250,8 @@
 
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-stretch">
-            <!-- Left Column: Institutional Copy, Slogans, Instant Search & Video Modal Trigger -->
-            <div class="lg:col-span-7 flex flex-col justify-between space-y-6">
+            <!-- Main Column: Institutional Copy, Slogans, Instant Search & Action Buttons -->
+            <div class="lg:col-span-12 max-w-4xl flex flex-col justify-between space-y-6">
               <div class="space-y-4">
                 <p class="text-xs sm:text-sm font-medium tracking-widest uppercase text-[#f59e0b]">
                   Université Ibn Zohr · Faculté d'Économie et de Gestion de Taroudant · Année Universitaire 2026-2027
@@ -239,7 +272,7 @@
                   « Se former, se découvrir, se construire, au-delà de l'amphithéâtre. »
                 </blockquote>
 
-                <p class="text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl">
+                <p class="text-sm sm:text-base text-slate-300 leading-relaxed max-w-3xl">
                   Bienvenue à la Faculté d'Économie et de Gestion de Taroudant (FEGT). Ce portail numérique réunit dans un même espace vos formations (Licences &amp; Master), votre passeport d'intégration, vos services numériques, vos démarches administratives, les 5 clubs étudiants et les grands rendez-vous culturels et sportifs de l'Université Ibn Zohr.
                 </p>
               </div>
@@ -311,142 +344,6 @@
                   <i class="fa-solid fa-file-pdf text-amber-300 text-sm" aria-hidden="true"></i>
                   <span>Fiches PDF des Formations (Licences &amp; Master)</span>
                 </a>
-              </div>
-            </div>
-
-            <!-- Right Column: Real Campus Photography Showcase of FEG Taroudant + Thumbnail Strip + Official QR Code -->
-            <div class="lg:col-span-5 flex flex-col">
-              <div class="h-full rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 p-5 sm:p-6 flex flex-col justify-between gap-4 shadow-2xl">
-                <!-- Real Photograph of FEG Taroudant Main Building (#15) with Interactive Switcher -->
-                <div class="space-y-2.5">
-                  <div class="relative rounded-xl overflow-hidden bg-[#091929] border border-white/15 aspect-[16/10] group">
-                    <img
-                      id="hero-featured-photo"
-                      src="https://user47431.na.imgto.link/public/20261023/2c9767848c0de07bb74fea83-whatsapp-image-2026-10-12-at-08-14-28.avif"
-                      alt="Façade principale de la Faculté d'Économie et de Gestion de Taroudant (FEGT - Université Ibn Zohr)"
-                      referrerpolicy="no-referrer"
-                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent flex items-end p-4">
-                      <div class="flex items-center justify-between w-full gap-3">
-                        <div>
-                          <p id="hero-photo-kicker" class="text-xs text-[#f59e0b] font-medium">Campus Universitaire FEG Taroudant</p>
-                          <p id="hero-photo-caption" class="text-sm font-semibold text-white">Façade officielle de la Faculté d'Économie et de Gestion</p>
-                        </div>
-                        <a
-                          href="#galerie-campus"
-                          class="px-3 py-1.5 rounded-lg bg-white/95 text-[#0f2942] text-xs font-bold hover:bg-[#f59e0b] hover:text-slate-950 transition-colors shrink-0"
-                        >
-                          Carrousel Photo ↓
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Quick Interactive Campus Photo Switcher (5 Real Photos) -->
-                  <div class="grid grid-cols-5 gap-2" role="group" aria-label="Sélectionner une vue réelle du campus de la FEG Taroudant">
-                    <button
-                      type="button"
-                      onclick="window.setHeroPhoto('https://user47431.na.imgto.link/public/20261023/2c9767848c0de07bb74fea83-whatsapp-image-2026-10-12-at-08-14-28.avif', 'Campus Universitaire FEG Taroudant', 'Façade officielle de la Faculté d\'Économie et de Gestion')"
-                      class="hero-thumb-btn rounded-lg overflow-hidden border-2 border-[#f59e0b] aspect-[16/10] cursor-pointer focus:outline-none"
-                      title="Façade principale FEG Taroudant"
-                    >
-                      <img src="https://user47431.na.imgto.link/public/20261023/2c9767848c0de07bb74fea83-whatsapp-image-2026-10-12-at-08-14-28.avif" alt="Façade FEGT" referrerpolicy="no-referrer" class="w-full h-full object-cover" />
-                    </button>
-                    <button
-                      type="button"
-                      onclick="window.setHeroPhoto('https://user47431.na.imgto.link/public/20261023/2967fefc7cf751bc35ad077c-whatsapp-image-2026-10-12-at-08-14-27-2.avif', 'Esplanade & Bâtiments FEGT', 'Vue panoramique du campus universitaire de Taroudant')"
-                      class="hero-thumb-btn rounded-lg overflow-hidden border border-white/20 hover:border-[#f59e0b] aspect-[16/10] cursor-pointer focus:outline-none"
-                      title="Esplanade du Campus FEGT"
-                    >
-                      <img src="https://user47431.na.imgto.link/public/20261023/2967fefc7cf751bc35ad077c-whatsapp-image-2026-10-12-at-08-14-27-2.avif" alt="Esplanade FEGT" referrerpolicy="no-referrer" class="w-full h-full object-cover" />
-                    </button>
-                    <button
-                      type="button"
-                      onclick="window.setHeroPhoto('https://user47431.na.imgto.link/public/20261023/3f769303ba6b10eb56e54dcf-whatsapp-image-2026-10-23-at-09-37-26-8.avif', 'Amphithéâtres & Enseignements', 'Cours magistraux, conférences et rencontres étudiantes')"
-                      class="hero-thumb-btn rounded-lg overflow-hidden border border-white/20 hover:border-[#f59e0b] aspect-[16/10] cursor-pointer focus:outline-none"
-                      title="Amphithéâtre FEG Taroudant"
-                    >
-                      <img src="https://user47431.na.imgto.link/public/20261023/3f769303ba6b10eb56e54dcf-whatsapp-image-2026-10-23-at-09-37-26-8.avif" alt="Amphithéâtre FEGT" referrerpolicy="no-referrer" class="w-full h-full object-cover" />
-                    </button>
-                    <button
-                      type="button"
-                      onclick="window.setHeroPhoto('https://user47431.na.imgto.link/public/20261023/00591ef52586489bc597ec16-whatsapp-image-2026-10-23-at-09-37-27.avif', 'Étudiants & Ambassadeurs FEGT', 'Accompagnement par les pairs (Masters & Doctorants)')"
-                      class="hero-thumb-btn rounded-lg overflow-hidden border border-white/20 hover:border-[#f59e0b] aspect-[16/10] cursor-pointer focus:outline-none"
-                      title="Étudiants Ambassadeurs FEGT"
-                    >
-                      <img src="https://user47431.na.imgto.link/public/20261023/00591ef52586489bc597ec16-whatsapp-image-2026-10-23-at-09-37-27.avif" alt="Ambassadeurs FEGT" referrerpolicy="no-referrer" class="w-full h-full object-cover" />
-                    </button>
-                    <button
-                      type="button"
-                      onclick="window.setHeroPhoto('https://user47431.na.imgto.link/public/20261023/f7532289c7a50d2a59335e61-whatsapp-image-2026-10-12-at-08-14-32-3.avif', 'Patrimoine de Taroudant', 'Remparts historiques ocre au cœur du Souss-Massa')"
-                      class="hero-thumb-btn rounded-lg overflow-hidden border border-white/20 hover:border-[#f59e0b] aspect-[16/10] cursor-pointer focus:outline-none"
-                      title="Remparts historiques de Taroudant"
-                    >
-                      <img src="https://user47431.na.imgto.link/public/20261023/f7532289c7a50d2a59335e61-whatsapp-image-2026-10-12-at-08-14-32-3.avif" alt="Remparts de Taroudant" referrerpolicy="no-referrer" class="w-full h-full object-cover" />
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Middle Operational Repères Box -->
-                <div class="grid grid-cols-2 gap-3 bg-white/5 rounded-xl p-3.5 border border-white/10 text-xs">
-                  <div class="space-y-0.5">
-                    <p class="text-[#fbbf24] font-semibold">Espace d'Accueil &amp; Mentorat</p>
-                    <p class="text-slate-200">Hall Pédagogique · Lun–Ven 09h–16h30</p>
-                    <p class="text-slate-400 text-[11px]">Animé avec Masters &amp; Doctorants</p>
-                  </div>
-                  <div class="space-y-0.5 border-l border-white/10 pl-3">
-                    <p class="text-[#fbbf24] font-semibold">Fiches Filières Officielles (PDF)</p>
-                    <p class="text-slate-200">Programmes S1–S6 &amp; Débouchés</p>
-                    <p class="text-slate-400 text-[11px]">Licences GEMD, MGE, ENDEB &amp; Master MCI</p>
-                  </div>
-                </div>
-
-                <!-- Official QR Code (#2) & Official Site Link Box -->
-                <div class="flex items-center justify-between gap-4 bg-white/10 rounded-xl p-4 border border-white/15">
-                  <div class="space-y-1">
-                    <p class="text-xs font-medium text-[#f59e0b] uppercase tracking-wider">Accès Rapide Officiel</p>
-                    <p class="text-sm font-semibold text-white">Portail Web FEG Taroudant</p>
-                    <p class="text-xs text-slate-300">
-                      Scannez le QR Code officiel ou visitez directement le site de la Faculté pour les avis aux étudiants.
-                    </p>
-                    <div class="pt-1 flex flex-wrap items-center gap-3 text-xs">
-                      <a
-                        href="https://fegt.uiz.ac.ma/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="inline-flex items-center gap-1.5 font-semibold text-[#f59e0b] hover:underline"
-                      >
-                        <span>https://fegt.uiz.ac.ma/</span>
-                        <i class="fa-solid fa-arrow-up-right-from-square text-[10px]" aria-hidden="true"></i>
-                      </a>
-                      <span aria-hidden="true">·</span>
-                      <a
-                        href="#galerie-campus"
-                        class="text-slate-200 hover:text-white underline decoration-white/40"
-                      >
-                        Voir le carrousel du campus ↓
-                      </a>
-                    </div>
-                  </div>
-
-                  <!-- Real Official QR Code Image (#2) for https://fegt.uiz.ac.ma/ -->
-                  <a
-                    href="https://fegt.uiz.ac.ma/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="bg-white p-1.5 rounded-lg shrink-0 shadow-md hover:scale-105 transition-transform"
-                    title="QR Code Officiel — https://fegt.uiz.ac.ma/"
-                  >
-                    <img
-                      src="https://user47431.na.imgto.link/public/20261023/54289b8cf89648b4fc9e14e5-whatsapp-image-2026-10-12-at-15-22-26.avif"
-                      alt="QR Code officiel vers https://fegt.uiz.ac.ma/"
-                      referrerpolicy="no-referrer"
-                      class="w-16 h-16 object-contain"
-                    />
-                  </a>
-                </div>
               </div>
             </div>
           </div>
@@ -719,10 +616,10 @@
               </div>
             </div>
 
-            <!-- C. Direction et Gouvernance + Plan et Accès + Capsule & QR Code Officiel -->
+            <!-- C. Direction et Gouvernance + Plan et Accès -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-              <!-- Direction et Gouvernance (4 cols) -->
-              <div class="lg:col-span-4 bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between space-y-4">
+              <!-- Direction et Gouvernance (6 cols) -->
+              <div class="lg:col-span-6 bg-white dark:bg-slate-900 rounded-2xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between space-y-4">
                 <div class="space-y-3">
                   <p class="text-xs font-bold uppercase tracking-wider text-[#d97742]">Direction &amp; Gouvernance</p>
                   <h3 class="font-serif text-lg sm:text-xl font-bold text-[#0f2942] dark:text-white">
@@ -749,17 +646,17 @@
                 </div>
               </div>
 
-              <!-- Plan du Campus, Bâtiments & Horaires d'Ouverture (4 cols) -->
-              <div class="lg:col-span-4 bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between space-y-4">
+              <!-- Plan du Campus, Bâtiments & Horaires d'Ouverture (6 cols) -->
+              <div class="lg:col-span-6 bg-white dark:bg-slate-900 rounded-2xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between space-y-4">
                 <div class="space-y-3">
                   <p class="text-xs font-bold uppercase tracking-wider text-[#d97742]">Plan du Campus &amp; Accès</p>
                   <h3 class="font-serif text-lg sm:text-xl font-bold text-[#0f2942] dark:text-white">
                     Repères Spatialisés &amp; Horaires
                   </h3>
-                  <div class="grid grid-cols-2 gap-2 text-xs">
+                  <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
                     <div class="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                       <span class="font-mono font-bold text-[#d97742]">Pôle A</span>
-                      <p class="font-semibold text-[#0f2942] dark:text-white">Décanat &amp; Administration</p>
+                      <p class="font-semibold text-[#0f2942] dark:text-white">Décanat &amp; Admin</p>
                     </div>
                     <div class="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                       <span class="font-mono font-bold text-[#d97742]">Pôle B</span>
@@ -767,7 +664,7 @@
                     </div>
                     <div class="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                       <span class="font-mono font-bold text-[#d97742]">Pôle C</span>
-                      <p class="font-semibold text-[#0f2942] dark:text-white">Amphithéâtres &amp; Salles TD</p>
+                      <p class="font-semibold text-[#0f2942] dark:text-white">Amphis &amp; Salles TD</p>
                     </div>
                     <div class="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                       <span class="font-mono font-bold text-[#d97742]">Pôle D</span>
@@ -775,7 +672,7 @@
                     </div>
                     <div class="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                       <span class="font-mono font-bold text-[#d97742]">Pôle E</span>
-                      <p class="font-semibold text-[#0f2942] dark:text-white">Bibliothèque &amp; Salles Info</p>
+                      <p class="font-semibold text-[#0f2942] dark:text-white">Bibliothèque &amp; Info</p>
                     </div>
                     <div class="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                       <span class="font-mono font-bold text-[#d97742]">Pôle F</span>
@@ -790,68 +687,6 @@
                     <p class="text-slate-700 dark:text-slate-200">• <strong>Campus &amp; Cours :</strong> Lundi au Samedi (08h30 – 18h30)</p>
                     <p class="text-slate-700 dark:text-slate-200">• <strong>Administration &amp; Scolarité :</strong> Lundi au Vendredi (08h30 – 16h30)</p>
                     <p class="text-slate-700 dark:text-slate-200">• <strong>Adresse :</strong> Hay Lmhaita, BP 271, 83000 Taroudant, Maroc</p>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Capsule de Présentation & Accès Rapide au Site Web (QR Code + URL) (4 cols) -->
-              <div class="lg:col-span-4 bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between space-y-4">
-                <div class="space-y-3">
-                  <p class="text-xs font-bold uppercase tracking-wider text-[#d97742]">Présentation Multimédia &amp; Portail Web</p>
-                  <h3 class="font-serif text-lg sm:text-xl font-bold text-[#0f2942] dark:text-white">
-                    Visite du Campus &amp; Accès Rapide QR Code
-                  </h3>
-
-                  <!-- Miniature de présentation de l'établissement -->
-                  <div class="relative rounded-xl overflow-hidden aspect-[16/9] border border-slate-200 dark:border-slate-700 group">
-                    <img
-                      src="https://user47431.na.imgto.link/public/20261023/e9065e1e584bf5275b4fd1db-whatsapp-image-2026-10-12-at-08-14-28-2.avif"
-                      alt="Présentation visuelle de la Faculté d'Économie et de Gestion de Taroudant"
-                      referrerpolicy="no-referrer"
-                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-3.5">
-                      <span class="text-[10px] font-bold uppercase tracking-wider text-amber-300">Présentation de l'Établissement</span>
-                      <p class="text-xs font-bold text-white">Découvrir le cadre d'études de la FEG Taroudant</p>
-                      <a
-                        href="#galerie-campus"
-                        class="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-300 hover:underline"
-                      >
-                        <i class="fa-solid fa-images" aria-hidden="true"></i>
-                        <span>Explorer les 19 photos du campus →</span>
-                      </a>
-                    </div>
-                  </div>
-
-                  <!-- QR Code Officiel & Adresse du Site -->
-                  <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
-                    <div class="space-y-1 text-xs">
-                      <p class="font-bold text-[#0f2942] dark:text-white">Site Officiel de l'Établissement</p>
-                      <p class="text-slate-500 dark:text-slate-400 text-[11px]">Scannez le QR Code ou cliquez sur l'adresse officielle :</p>
-                      <a
-                        href="https://www.fegt.uiz.ac.ma/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="inline-flex items-center gap-1 font-mono font-bold text-[#d97742] hover:underline text-xs"
-                      >
-                        <span>https://www.fegt.uiz.ac.ma/</span>
-                        <i class="fa-solid fa-arrow-up-right-from-square text-[10px]" aria-hidden="true"></i>
-                      </a>
-                    </div>
-                    <a
-                      href="https://www.fegt.uiz.ac.ma/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="bg-white p-1.5 rounded-lg border border-slate-200 shrink-0 shadow-xs"
-                      title="QR Code Officiel FEG Taroudant"
-                    >
-                      <img
-                        src="https://user47431.na.imgto.link/public/20261023/54289b8cf89648b4fc9e14e5-whatsapp-image-2026-10-12-at-15-22-26.avif"
-                        alt="QR Code renvoyant vers le site officiel https://www.fegt.uiz.ac.ma/"
-                        referrerpolicy="no-referrer"
-                        class="w-16 h-16 object-contain"
-                      />
-                    </a>
                   </div>
                 </div>
               </div>
@@ -1202,27 +1037,127 @@
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <!-- Tool 1: MyUIZ / e-Scolarité -->
+                  <!-- Tool 1: MyUIZ / Authentification ENT -->
                   <div class="card-3d p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 flex flex-col justify-between">
                     <div>
                       <div class="flex items-center justify-between">
-                        <h4 class="font-bold text-sm text-[#0f2942] dark:text-white">MyUIZ / e-Scolarité</h4>
+                        <h4 class="font-bold text-sm text-[#0f2942] dark:text-white">ENT MyUIZ / Authentification</h4>
                         <i class="fa-solid fa-graduation-cap text-[#d97742]" aria-hidden="true"></i>
                       </div>
                       <p class="mt-1.5 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                         Dossier administratif, inscriptions pédagogiques par semestre, notes d'examens et demandes d'attestations en ligne.
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onclick="window.selectDemarche('certificat')"
-                      class="mt-3 text-xs font-semibold text-[#d97742] hover:underline text-left cursor-pointer"
-                    >
-                      Voir guide d'accès →
-                    </button>
+                    <div class="mt-3 flex items-center gap-3">
+                      <a
+                        href="https://www.uiz.ac.ma/user/login"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-xs font-bold text-[#d97742] hover:underline"
+                      >
+                        Connexion ENT MyUIZ ↗
+                      </a>
+                      <button
+                        type="button"
+                        onclick="window.selectDemarche('email')"
+                        class="text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 underline cursor-pointer"
+                      >
+                        Guide
+                      </button>
+                    </div>
                   </div>
 
-                  <!-- Tool 2: Emplois du temps -->
+                  <!-- Tool 2: Changement de Filière (Plateforme ENE) -->
+                  <div class="card-3d p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 flex flex-col justify-between">
+                    <div>
+                      <div class="flex items-center justify-between">
+                        <h4 class="font-bold text-sm text-[#0f2942] dark:text-white">Changement de Filière (ENE)</h4>
+                        <i class="fa-solid fa-shuffle text-[#d97742]" aria-hidden="true"></i>
+                      </div>
+                      <p class="mt-1.5 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                        Guichet numérique officiel pour la réorientation et le changement de filière (GEMD, MGE, ENDEB) à la FEG Taroudant.
+                      </p>
+                    </div>
+                    <div class="mt-3 flex items-center gap-3">
+                      <a
+                        href="https://ene.fpt.ac.ma/#/login/feg?redirect=%2Ffpt%2FchangeFiliere"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-xs font-bold text-[#d97742] hover:underline"
+                      >
+                        Accéder à ENE Changement ↗
+                      </a>
+                      <button
+                        type="button"
+                        onclick="window.selectDemarche('changement_filiere')"
+                        class="text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 underline cursor-pointer"
+                      >
+                        Guide
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Tool 3: MINHATI (Bourses) -->
+                  <div class="card-3d p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 flex flex-col justify-between">
+                    <div>
+                      <div class="flex items-center justify-between">
+                        <h4 class="font-bold text-sm text-[#0f2942] dark:text-white">Portail MINHATI (Bourses)</h4>
+                        <i class="fa-solid fa-hand-holding-dollar text-[#d97742]" aria-hidden="true"></i>
+                      </div>
+                      <p class="mt-1.5 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                        Portail national de demande de bourse d'enseignement supérieur (ENSSUP) et suivi des versements trimestriels ONOUSC.
+                      </p>
+                    </div>
+                    <div class="mt-3 flex items-center gap-3">
+                      <a
+                        href="https://www.minhaty.ma/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-xs font-bold text-[#d97742] hover:underline"
+                      >
+                        Portail Minhaty.ma ↗
+                      </a>
+                      <button
+                        type="button"
+                        onclick="window.selectDemarche('bourse')"
+                        class="text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 underline cursor-pointer"
+                      >
+                        Modalités
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Tool 4: I.LOGHA Sup -->
+                  <div class="card-3d p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 flex flex-col justify-between">
+                    <div>
+                      <div class="flex items-center justify-between">
+                        <h4 class="font-bold text-sm text-[#0f2942] dark:text-white">Plateforme I.LOGHA Sup</h4>
+                        <i class="fa-solid fa-language text-[#d97742]" aria-hidden="true"></i>
+                      </div>
+                      <p class="mt-1.5 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                        Renforcement linguistique, test de positionnement obligatoire UIZ et certification en langues étrangères (LMD).
+                      </p>
+                    </div>
+                    <div class="mt-3 flex items-center gap-3">
+                      <a
+                        href="https://elogha-sup.uiz.ac.ma/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-xs font-bold text-[#d97742] hover:underline"
+                      >
+                        Ouvrir I.LOGHA Sup ↗
+                      </a>
+                      <button
+                        type="button"
+                        onclick="window.selectDemarche('elogha')"
+                        class="text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 underline cursor-pointer"
+                      >
+                        Détails
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Tool 5: Emplois du temps & Avis -->
                   <div class="card-3d p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 flex flex-col justify-between">
                     <div>
                       <div class="flex items-center justify-between">
@@ -1242,75 +1177,15 @@
                     </button>
                   </div>
 
-                  <!-- Tool 3: MINHATI (Bourses) -->
-                  <div class="card-3d p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 flex flex-col justify-between">
-                    <div>
-                      <div class="flex items-center justify-between">
-                        <h4 class="font-bold text-sm text-[#0f2942] dark:text-white">MINHATI (Bourses)</h4>
-                        <i class="fa-solid fa-hand-holding-dollar text-[#d97742]" aria-hidden="true"></i>
-                      </div>
-                      <p class="mt-1.5 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                        Portail national de demande de bourse d'enseignement supérieur et suivi des versements trimestriels ONOUSC.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onclick="window.selectDemarche('bourse')"
-                      class="mt-3 text-xs font-semibold text-[#d97742] hover:underline text-left cursor-pointer"
-                    >
-                      Infos Bourses &amp; Délais →
-                    </button>
-                  </div>
-
-                  <!-- Tool 4: I.LOGHA -->
-                  <div class="card-3d p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 flex flex-col justify-between">
-                    <div>
-                      <div class="flex items-center justify-between">
-                        <h4 class="font-bold text-sm text-[#0f2942] dark:text-white">Plateforme I.LOGHA</h4>
-                        <i class="fa-solid fa-language text-[#d97742]" aria-hidden="true"></i>
-                      </div>
-                      <p class="mt-1.5 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                        Renforcement linguistique interactif, tests de positionnement et perfectionnement en langues étrangères et Soft Skills.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onclick="window.selectDemarche('email')"
-                      class="mt-3 text-xs font-semibold text-[#d97742] hover:underline text-left cursor-pointer"
-                    >
-                      Activer mon accès I.LOGHA →
-                    </button>
-                  </div>
-
-                  <!-- Tool 5: Compte institutionnel UIZ -->
-                  <div class="card-3d p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 flex flex-col justify-between">
-                    <div>
-                      <div class="flex items-center justify-between">
-                        <h4 class="font-bold text-sm text-[#0f2942] dark:text-white">Compte Institutionnel UIZ</h4>
-                        <i class="fa-solid fa-id-badge text-[#d97742]" aria-hidden="true"></i>
-                      </div>
-                      <p class="mt-1.5 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                        Identifiant officiel unique pour Google Classroom, ressources numériques, bibliothèque électronique et Wi-Fi campus.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onclick="window.selectDemarche('email')"
-                      class="mt-3 text-xs font-semibold text-[#d97742] hover:underline text-left cursor-pointer"
-                    >
-                      Procédure d'activation →
-                    </button>
-                  </div>
-
                   <!-- Tool 6: Erasmus+ & Mobilité -->
                   <div class="card-3d p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 flex flex-col justify-between">
                     <div>
                       <div class="flex items-center justify-between">
-                        <h4 class="font-bold text-sm text-[#0f2942] dark:text-white">Erasmus+ &amp; International</h4>
+                        <h4 class="font-bold text-sm text-[#0f2942] dark:text-white">Erasmus+ &amp; Mobilité</h4>
                         <i class="fa-solid fa-earth-africa text-[#d97742]" aria-hidden="true"></i>
                       </div>
                       <p class="mt-1.5 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                        Bourses de mobilité internationale, échanges semestriels en Europe, partenariats académiques et appels à candidatures.
+                        Bourses européennes d'échange avec WSB Merito University à Poznań (Pologne) pour Licences et Master MCI.
                       </p>
                     </div>
                     <button
@@ -1318,14 +1193,14 @@
                       onclick="window.selectDemarche('mobilite')"
                       class="mt-3 text-xs font-semibold text-[#d97742] hover:underline text-left cursor-pointer"
                     >
-                      Conditions de candidature →
+                      Conditions &amp; Bourse →
                     </button>
                   </div>
                 </div>
               </div>
 
               <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
-                <span>Autres services intégrés : Santé Universitaire · Sport · Bibliothèque FEGT</span>
+                <span>Services intégrés : Santé Universitaire · Sport · Bibliothèque FEGT · Cellule Handicap</span>
                 <a href="https://fegt.uiz.ac.ma/" target="_blank" rel="noopener noreferrer" class="font-semibold text-[#0f2942] dark:text-amber-400 hover:underline">
                   Portail e-Services FEGT ↗
                 </a>
@@ -1392,6 +1267,22 @@
                   >
                     <span>Mobilité &amp; Erasmus+</span>
                     <i class="fa-solid fa-plane-departure text-[11px]" aria-hidden="true"></i>
+                  </button>
+                  <button
+                    type="button"
+                    data-demarche="changement_filiere"
+                    class="demarche-btn px-3 py-2.5 rounded-xl text-xs font-semibold text-left bg-white/10 hover:bg-white/15 text-slate-100 transition-colors cursor-pointer flex items-center justify-between gap-2"
+                  >
+                    <span>Changer de filière (ENE)</span>
+                    <i class="fa-solid fa-shuffle text-[11px]" aria-hidden="true"></i>
+                  </button>
+                  <button
+                    type="button"
+                    data-demarche="elogha"
+                    class="demarche-btn px-3 py-2.5 rounded-xl text-xs font-semibold text-left bg-white/10 hover:bg-white/15 text-slate-100 transition-colors cursor-pointer flex items-center justify-between gap-2"
+                  >
+                    <span>I.LOGHA Sup (Langues)</span>
+                    <i class="fa-solid fa-language text-[11px]" aria-hidden="true"></i>
                   </button>
                 </div>
 
@@ -1556,7 +1447,7 @@
       <!-- ==================== 5. VIE ASSOCIATIVE, 5 CLUBS & PROPOSER UNE ACTIVITÉ ==================== -->
       <section id="vie-etudiante" class="py-16 lg:py-24 bg-[#fbf8f3] dark:bg-[#091929] border-b border-slate-200 dark:border-slate-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
-          <!-- Sub-section A: Les 5 Clubs Officiels de la FEG Taroudant -->
+          <!-- Sub-section A: Les Clubs Étudiants Officiels de la FEG Taroudant -->
           <div>
             <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
               <div>
@@ -1564,7 +1455,7 @@
                   05. Vie Associative &amp; Engagement Étudiant
                 </p>
                 <h2 class="font-serif text-2xl sm:text-4xl font-bold text-[#0f2942] dark:text-white mt-1 text-balance">
-                  Les 5 Clubs Étudiants de la FEG Taroudant
+                  Les Clubs Étudiants &amp; Initiatives de la FEG Taroudant
                 </h2>
                 <p class="mt-2 text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-2xl">
                   Les clubs constituent le cœur battant de la vie parauniversitaire à la FEGT. Consultez la fiche numérique complète de chaque club (Présentation, Responsable, Activités, Actualités, Contact) et rejoignez l'équipe dès aujourd'hui.
@@ -1964,14 +1855,6 @@
             >
               Site Officiel FEGT (fegt.uiz.ac.ma) ↗
             </a>
-            <button
-              type="button"
-              onclick="window.downloadStandaloneHtml()"
-              class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white text-xs sm:text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0"
-            >
-              <i class="fa-solid fa-code mr-1.5" aria-hidden="true"></i>
-              Exporter index.html
-            </button>
           </div>
         </div>
 
@@ -2199,19 +2082,29 @@
           aria-live="polite"
         ></div>
 
-        <!-- Quick Prompts Bar -->
+        <!-- Quick Prompts Bar (Direct Access to 4 Portals & Key Inquiries) -->
         <div class="px-3.5 py-2 bg-white dark:bg-slate-900 border-t border-slate-200/80 dark:border-slate-800 flex items-center gap-1.5 overflow-x-auto shrink-0">
-          <button type="button" data-ai-prompt="Quelles sont les filières Licence et Master accréditées à la FEG Taroudant ?" class="ai-quick-prompt-btn px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-[#d97742]/15 hover:text-[#d97742] text-slate-700 dark:text-slate-300 text-[11px] font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer">
+          <button type="button" data-ai-prompt="Donne-moi le lien et les modalités d'accès à la plateforme I.LOGHA Sup de l'UIZ" class="ai-quick-prompt-btn px-2.5 py-1 rounded-lg bg-amber-100/70 text-[#0f2942] dark:bg-amber-950/60 dark:text-amber-300 hover:bg-[#d97742] hover:text-white text-[11px] font-bold whitespace-nowrap shrink-0 transition-colors cursor-pointer flex items-center gap-1">
+            <i class="fa-solid fa-language text-[10px]" aria-hidden="true"></i>
+            <span>I.LOGHA Sup</span>
+          </button>
+          <button type="button" data-ai-prompt="Comment consulter et suivre ma bourse étudiante sur le portail Minhaty ?" class="ai-quick-prompt-btn px-2.5 py-1 rounded-lg bg-amber-100/70 text-[#0f2942] dark:bg-amber-950/60 dark:text-amber-300 hover:bg-[#d97742] hover:text-white text-[11px] font-bold whitespace-nowrap shrink-0 transition-colors cursor-pointer flex items-center gap-1">
+            <i class="fa-solid fa-coins text-[10px]" aria-hidden="true"></i>
+            <span>Bourses Minhaty</span>
+          </button>
+          <button type="button" data-ai-prompt="Quelle est la procédure et le lien officiel ENE pour demander un changement de filière à la FEG Taroudant ?" class="ai-quick-prompt-btn px-2.5 py-1 rounded-lg bg-amber-100/70 text-[#0f2942] dark:bg-amber-950/60 dark:text-amber-300 hover:bg-[#d97742] hover:text-white text-[11px] font-bold whitespace-nowrap shrink-0 transition-colors cursor-pointer flex items-center gap-1">
+            <i class="fa-solid fa-shuffle text-[10px]" aria-hidden="true"></i>
+            <span>Changer de filière (ENE)</span>
+          </button>
+          <button type="button" data-ai-prompt="Comment me connecter à mon espace numérique étudiant ENT / MyUIZ ?" class="ai-quick-prompt-btn px-2.5 py-1 rounded-lg bg-amber-100/70 text-[#0f2942] dark:bg-amber-950/60 dark:text-amber-300 hover:bg-[#d97742] hover:text-white text-[11px] font-bold whitespace-nowrap shrink-0 transition-colors cursor-pointer flex items-center gap-1">
+            <i class="fa-solid fa-key text-[10px]" aria-hidden="true"></i>
+            <span>Connexion ENT MyUIZ</span>
+          </button>
+          <button type="button" data-ai-prompt="Comment fonctionne la règle de compensation de semestre (moyenne >= 10/20, pas de note < 5/20) ?" class="ai-quick-prompt-btn px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-[#d97742]/15 hover:text-[#d97742] text-slate-700 dark:text-slate-300 text-[11px] font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer">
+            Compensation (≥ 10/20)
+          </button>
+          <button type="button" data-ai-prompt="Quelles sont les 4 filières Licence et Master accréditées à la FEG Taroudant ?" class="ai-quick-prompt-btn px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-[#d97742]/15 hover:text-[#d97742] text-slate-700 dark:text-slate-300 text-[11px] font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer">
             Filières FEGT
-          </button>
-          <button type="button" data-ai-prompt="Quelle est la procédure officielle d'inscription des bacheliers à l'UIZ et à la FEGT ?" class="ai-quick-prompt-btn px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-[#d97742]/15 hover:text-[#d97742] text-slate-700 dark:text-slate-300 text-[11px] font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer">
-            Inscription & Dossier
-          </button>
-          <button type="button" data-ai-prompt="Comment fonctionnent les bourses universitaires ENSSUP et le retrait du certificat de scolarité ?" class="ai-quick-prompt-btn px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-[#d97742]/15 hover:text-[#d97742] text-slate-700 dark:text-slate-300 text-[11px] font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer">
-            Bourses & Scolarité
-          </button>
-          <button type="button" data-ai-prompt="Quels sont les clubs étudiants officiels de la FEG Taroudant ?" class="ai-quick-prompt-btn px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-[#d97742]/15 hover:text-[#d97742] text-slate-700 dark:text-slate-300 text-[11px] font-medium whitespace-nowrap shrink-0 transition-colors cursor-pointer">
-            Clubs FEGT
           </button>
         </div>
 
@@ -2221,7 +2114,7 @@
             id="official-ai-input"
             type="text"
             required
-            placeholder="Posez votre question officielle (UIZ, FEGT, ENSSUP)..."
+            placeholder="Posez votre question (I.LOGHA, Minhaty, ENE, ENT, filières, notes)..."
             class="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#d97742]"
           />
           <button
@@ -2242,7 +2135,7 @@
         type="button"
         aria-expanded="false"
         aria-controls="official-ai-chat-panel"
-        class="group px-4 py-3 rounded-2xl bg-gradient-to-r from-[#0f2942] to-[#173d61] hover:from-[#d97742] hover:to-[#c26330] text-white shadow-xl border border-white/15 flex items-center gap-3 transition-all duration-300 cursor-pointer"
+        class="group px-4 py-3 rounded-2xl bg-gradient-to-r from-[#0f2942] to-[#173d61] hover:from-[#d97742] hover:to-[#c26330] text-white shadow-2xl border border-white/20 flex items-center gap-3 transition-all duration-300 cursor-pointer"
       >
         <span class="w-9 h-9 rounded-xl bg-[#d97742] group-hover:bg-white/20 text-white flex items-center justify-center shadow-inner shrink-0">
           <i class="fa-solid fa-comments text-base" aria-hidden="true"></i>
@@ -2570,6 +2463,26 @@
               "Présentez les justificatifs médicaux ou fonctionnels permettant d'évaluer vos besoins d'accompagnement.",
               "Mise en place personnalisée : accès aux salles du rez-de-chaussée, supports numériques adaptés, tiers-temps ou assistance aux examens."
             ]
+          },
+          changement_filiere: {
+            title: "Demander un changement de filière (Plateforme ENE)",
+            service: "Plateforme ENE FEG Taroudant & Service de la Scolarité",
+            delai: "Période réglementaire fixée en début d'année universitaire",
+            steps: [
+              "Connectez-vous au portail officiel ENE FEGT : https://ene.fpt.ac.ma/#/login/feg?redirect=%2Ffpt%2FchangeFiliere muni de vos identifiants.",
+              "Sélectionnez votre filière actuelle et formulez vos vœux de réorientation (GEMD, MGE ou ENDEB).",
+              "Téléchargez les pièces justificatives demandées puis suivez l'avis de la commission pédagogique sur la plateforme."
+            ]
+          },
+          elogha: {
+            title: "Accéder à la plateforme de langues I.LOGHA Sup",
+            service: "Centre de Langues & Certification UIZ",
+            delai: "Accès continu 24h/24 & sessions de test semestrielles",
+            steps: [
+              "Rendez-vous sur la plateforme officielle : https://elogha-sup.uiz.ac.ma/.",
+              "Connectez-vous avec vos identifiants universitaires ENT / compte étudiant UIZ.",
+              "Complétez votre test de positionnement linguistique obligatoire LMD (français/anglais) et accédez aux modules d'auto-formation."
+            ]
           }
         };
 
@@ -2579,103 +2492,154 @@
         const CLUBS_DATA = [
           {
             id: "enactus",
-            name: "ENACTUS FEG Taroudant",
-            tagline: "Entrepreneuriat social, innovation durable et projets à impact.",
+            name: "Enactus FEG Taroudant (Faculté d’Économie et de Gestion de Taroudant)",
+            tagline: "Entrepreneuriat social, formations certifiantes et projets durables.",
             category: "Entrepreneuriat & Impact",
             icon: "fa-seedling",
             accentColor: "#f59e0b",
-            createdYear: "Équipe officielle accréditée Enactus Morocco",
-            responsable: "Bureau Exécutif Étudiant (Team Leader) & Conseiller Pédagogique (Faculty Advisor FEGT)",
+            createdYear: "Club affilié au réseau Enactus Morocco",
+            responsable: "Fatima Boukedir",
+            logoImg: "https://user47431.na.imgto.link/public/20261023/40987e25abcf1e63079f1a53-849161228-18372044509208156-3955676432578854039-n.avif",
+            logoFit: "cover",
+            instagram: "https://www.instagram.com/enactusfegtrd/",
+            instagramHandle: "enactusfegtrd",
             presentation:
-              "ENACTUS FEG Taroudant mobilise les étudiants autour de l'entrepreneuriat social et du développement durable. Le club accompagne la création de projets économiques viables répondant aux défis sociaux, agricoles, artisanaux et environnementaux de la province de Taroudant et de la région Souss-Massa.",
+              "Enactus FEG Taroudant mobilise les étudiants autour de l'entrepreneuriat social et du développement durable. Le club accompagne la création et le développement de projets économiques à impact fort pour la région.",
             activities: [
-              "Incubation de projets étudiants à impact social et écologique (coopératives locales, valorisation du terroir, économie circulaire).",
-              "Ateliers de Design Thinking, Business Model Canvas et pitch entrepreneurial.",
-              "Participation aux compétitions régionales et nationales Enactus Morocco."
+              "Formations : Idéation, Design Thinking, BMC, Prototyping, Sales, Marketing.",
+              "Sorties de terrain et visites d'entreprises.",
+              "Développement de projets d'entrepreneuriat social."
             ],
-            news: "Lancement du recrutement annuel d'octobre 2026 et préparation de 4 nouveaux projets pour le Forum Entrepreneuriat Étudiant UIZ.",
-            howToJoin: "Inscrivez-vous lors des journées portes ouvertes des clubs ou via le formulaire numérique ci-dessous (entretiens de motivation ouverts à toutes les filières).",
-            contact: "Bureau des Clubs FEGT · Espace d'Accueil & Vie Étudiante"
+            news: "Campagne de recrutement annuelle et préparation des projets pour les compétitions nationales Enactus Morocco.",
+            howToJoin: "Remplir le formulaire d'adhésion du club au début de l'année universitaire, puis intégrer les groupes de communication officiels des membres pour suivre les activités et les annonces.",
+            contact: "Fatima Boukedir · Instagram : @enactusfegtrd · Espace d'Accueil & Vie Étudiante FEGT"
           },
           {
             id: "hult-prize",
-            name: "Hult Prize FEG Taroudant",
-            tagline: "Entrepreneuriat étudiant et challenges internationaux.",
+            name: "EF Hult Prize FEGT",
+            tagline: "Innovation, entrepreneuriat social, créativité et défis mondiaux.",
             category: "Challenge International",
             icon: "fa-globe",
             accentColor: "#e11d48",
-            createdYear: "Programme OnCampus Hult Prize Foundation",
-            responsable: "Campus Director Hult Prize FEGT & Comité d'Organisation",
+            createdYear: "Création : 2025",
+            responsable: "Loubna Boubrik, présidente du club",
+            logoImg: "https://user47431.na.imgto.link/public/20261023/8dd054bd1a9d529b6809daf3-856658077-18150732835498172-2449314435607629273-n.avif",
+            logoFit: "cover",
+            instagram: "https://www.instagram.com/ef_hprize.fegt/",
+            instagramHandle: "ef_hprize.fegt",
             presentation:
-              "Souvent surnommé le « Prix Nobel des étudiants », le programme Hult Prize à la FEG Taroudant met au défi nos étudiants de résoudre un enjeu mondial pressant à travers la création d'une startup sociale innovante, en lien avec les Objectifs de Développement Durable (ODD) des Nations Unies.",
+              "Le club encourage l’innovation, l’entrepreneuriat social et la créativité chez les étudiants. Il organise des activités et des compétitions liées à Hult Prize, afin d’aider les étudiants à développer des projets innovants qui contribuent à résoudre des défis mondiaux. Il vise également à développer les compétences des étudiants, l’esprit d’équipe et le travail collaboratif.",
             activities: [
-              "Organisation du Hult Prize OnCampus Program à la FEG Taroudant devant un jury de professionnels.",
-              "Bootcamps intensifs : idéation, prototypage, modélisation financière et art du pitch en anglais et français.",
-              "Accompagnement des équipes lauréates vers les demi-finales régionales et internationales."
+              "Organisation des activités et des compétitions liées à Hult Prize OnCampus.",
+              "Accompagnement des étudiants pour développer des projets innovants répondant aux défis mondiaux.",
+              "Développement des compétences entrepreneuriales, esprit d’équipe et travail collaboratif."
             ],
-            news: "Ouverture de l'inscription des équipes (3 à 4 étudiants) pour l'édition 2026-2027 autour de la thématique annuelle Hult Prize.",
-            howToJoin: "Rejoignez le comité d'organisation (Staff OnCampus) ou inscrivez votre équipe de porteurs de projet.",
-            contact: "Comité OnCampus Hult Prize · Espace Vie Étudiante FEGT"
+            news: "Lancement des inscriptions et préparation des compétitions Hult Prize sous la présidence de Loubna Boubrik.",
+            howToJoin: "Pour adhérer au club, l’étudiant doit présenter une demande écrite signée, qui doit être acceptée par le bureau du club. La qualité de membre est confirmée par l’attribution d’une carte d’adhésion.",
+            contact: "Loubna Boubrik · Instagram : @ef_hprize.fegt · Espace Vie Étudiante FEGT"
           },
           {
             id: "club-sport",
-            name: "Club Sport FEGT",
-            tagline: "Activités sportives, bien-être et compétitions inter-établissements.",
-            category: "Sport & Compétitions",
-            icon: "fa-futbol",
+            name: "Club Sportif FEG",
+            tagline: "Activités sportives, athlétisme et esprit d'équipe sur le campus.",
+            category: "Sport & Athlétisme",
+            icon: "fa-person-running",
             accentColor: "#10b981",
-            createdYear: "Section sportive universitaire FEGT - UIZ.Sport",
-            responsable: "Responsable du Sport Universitaire FEGT & Capitaines des sections",
+            createdYear: "Saison 2026/2027",
+            responsable: "Abdellah Elmouden",
+            logoImg: "https://user47431.na.imgto.link/public/20261023/08c938d6d00d299cc0ae1a7f-851887766-18020203082944658-1593281187849911196-n.avif",
+            logoFit: "contain",
+            instagram: "https://www.instagram.com/club_sportif_feg/",
+            instagramHandle: "club_sportif_feg",
             presentation:
-              "Le Club Sport anime la vie sportive du campus de Taroudant. Il favorise l'esprit d'équipe, la santé physique, le fair-play et prépare les équipes représentatives de la Faculté aux tournois inter-filières et au grand championnat UIZ.Sport.",
+              "Le Club Sportif FEG est la structure sportive officielle de la Faculté d'Économie et de Gestion de Taroudant. Il fédère les étudiants autour du sport, du bien-être, de l'athlétisme et de l'esprit de compétition universitaire.",
             activities: [
-              "Tournois internes de Futsal masculin et féminin, Basketball 3x3, Volleyball et Échecs.",
-              "Course universitaire, séances de remise en forme et randonnées dans l'arrière-pays de Taroudant.",
-              "Sélection et entraînement des équipes de la FEGT pour les compétitions inter-établissements UIZ.Sport."
+              "Les activités sportives et athlétisme (course, endurance, vitesse, préparation physique).",
+              "Organisation de tournois internes et inter-filières (football, futsal, basketball, volleyball).",
+              "Sélection et préparation des athlètes et équipes de la FEGT pour les championnats UIZ.Sport."
             ],
-            news: "Inscriptions ouvertes pour le Tournoi d'Intégration inter-filières (GEMD, MGE, ENDEB, MCI) dès novembre 2026.",
-            howToJoin: "Inscription directe auprès du bureau du Club Sport avec certificat d'aptitude physique et carte d'étudiant.",
-            contact: "Bureau du Sport Universitaire · Terrains & Espace Sportif FEGT"
+            news: "Lancement des entraînements d'athlétisme et des inscriptions pour la saison 2026/2027.",
+            howToJoin: "Contactez Abdellah Elmouden ou envoyez un message direct sur Instagram @club_sportif_feg.",
+            contact: "Bureau du Club Sportif FEG · Terrains & Espace Sportif FEGT"
           },
           {
-            id: "club-ambassadeurs",
-            name: "Club des Ambassadeurs et de l'Orientation Pédagogique",
-            tagline: "Accueil, information, orientation et accompagnement par les pairs.",
-            category: "Orientation & Mentorat",
-            icon: "fa-compass-drafting",
+            id: "youth-ambassadors",
+            name: "Youth Ambassadors Club - نادي السفراء الشباب",
+            tagline: "Leadership, plaidoyer, ODD, médias numériques et diplomatie étudiante.",
+            category: "Leadership & Diplomatie",
+            icon: "fa-bullhorn",
             accentColor: "#0ea5e9",
-            createdYear: "Réseau des Étudiants Ambassadeurs FEGT",
-            responsable: "Coordination Vie de l'Étudiant, Étudiants de Master & Doctorants Tuteurs",
+            createdYear: "Création : 2026",
+            responsable: "El Mahdi Ifguisse",
+            logoImg: "https://user47431.na.imgto.link/public/20261023/a808e16e2ae964bc737e5e71-662900630-18075688970243849-1441655422808930151-n.avif",
+            logoFit: "contain",
+            instagram: "https://www.instagram.com/youth_ambassadors.club?rpxt=c3ZnYTMwOHp4eWFp",
+            instagramHandle: "youth_ambassadors.club",
             presentation:
-              "Véritable trait d'union entre l'administration, les lycéens du Souss-Massa et les étudiants de la Faculté, le Club des Ambassadeurs assure l'animation de l'Espace d'Accueil, le parrainage des nouveaux bacheliers et le rayonnement de la FEG Taroudant.",
+              "Le Youth Ambassadors Club (نادي السفراء الشباب) a pour mission de former de jeunes ambassadeurs capables de porter la voix des étudiants, de promouvoir les Objectifs de Développement Durable (ODD) et de rayonner lors de forums et expériences internationales.",
             activities: [
-              "Permanences d'accueil et de mentorat par les pairs (peer-mentoring) à l'Espace d'Accueil de la Faculté.",
-              "Organisation des Journées Portes Ouvertes (JPO) et des caravanes d'orientation dans les lycées de la province.",
-              "Orientation vers les fiches officielles des formations et accompagnement méthodologique des nouveaux inscrits."
+              "Formation de jeunes ambassadeurs : leadership, plaidoyer et prise de parole en public.",
+              "Diffusion de la culture des Objectifs de Développement Durable (ODD) : campagnes de sensibilisation.",
+              "Développement des compétences en communication et médias : gestion de campagnes, création de contenu, média digital, intelligence artificielle, présentation TV.",
+              "Lancement d'initiatives de jeunes : projets environnementaux, sociaux et culturels.",
+              "Ouverture sur les expériences internationales : simulations MUN et participation aux forums internationaux.",
+              "Représentation des étudiants et port de leur voix."
             ],
-            news: "Mobilisation des étudiants de Licence 3, Master MCI et Doctorants pour le programme de tutorat 2026-2027 (attestation d'engagement délivrée).",
-            howToJoin: "Candidature ouverte à tous les étudiants motivés par la communication, l'entraide et le leadership étudiant.",
-            contact: "Permanence Espace d'Accueil, d'Information & d'Accompagnement FEGT"
+            news: "Campagne d'adhésion 2026-2027 ouverte à tous les étudiants désireux de s'engager.",
+            howToJoin: "Remplir le formulaire d'inscription électronique et contacter le bureau dirigeant.",
+            contact: "Instagram : @youth_ambassadors.club · Espace Vie Étudiante FEGT"
           },
           {
-            id: "club-conference",
-            name: "Club Conférence et Formation",
-            tagline: "Conférences, ateliers Soft Skills, formations, art oratoire et rencontres.",
-            category: "Culture, Débat & Compétences",
-            icon: "fa-microphone-lines",
+            id: "csop",
+            name: "Club de Soutien et d’Orientation Pédagogique (CSOP)",
+            tagline: "Préparation aux examens, parrainage pédagogique, QCM et réussite universitaire.",
+            category: "Orientation & Pédagogie",
+            icon: "fa-book-open-reader",
             accentColor: "#8b5cf6",
-            createdYear: "Pôle Scientifique, Culturel & Oratoire FEGT",
-            responsable: "Bureau du Club Conférence & Référents Pédagogiques",
+            createdYear: "Création : 2014",
+            responsable: "Imane Moumine, présidente du club",
+            logoImg: "https://user47431.na.imgto.link/public/20261023/b193e4e3f4086cc35ff12f65-633347824-18048891749687867-5723449694106701383-n.avif",
+            logoFit: "contain",
+            instagram: "https://www.instagram.com/club_orientation_pedagogique?rpxt=NWR3Ym9uaXJ3bXJr",
+            instagramHandle: "club_orientation_pedagogique",
             presentation:
-              "Le Club Conférence et Formation enrichit le parcours académique par des rencontres avec des dirigeants d'entreprises, des ateliers pratiques d'employabilité, la formation à la prise de parole en public (UIZ.Éloquence) et la production de podcasts étudiants (UIZ.CAPS & PODS).",
+              "Fondé en 2014, le Club de Soutien et d’Orientation Pédagogique (CSOP) est un pilier de l'entraide estudiantine à la FEG Taroudant, dédié à la réussite académique, à l'orientation et à l'accompagnement méthodologique des étudiants.",
             activities: [
-              "Cycles de conférences économiques, tables rondes métiers et masterclasses avec des professionnels.",
-              "Ateliers de prise de parole en public et préparation au concours UIZ.Éloquence (en 5 langues).",
-              "Formations certifiantes aux outils bureautiques, à l'usage éthique de l'IA, à la rédaction de CV et au podcasting."
+              "Organisation d’ateliers de préparation aux examens.",
+              "Accompagnement et orientation pédagogique des étudiants.",
+              "Organisation de conférences et de rencontres éducatives.",
+              "Sensibilisation à la gestion du stress et au bien-être psychologique.",
+              "Initiation à de nouvelles méthodes de révision, notamment la méthodologie des QCM.",
+              "Organisation d’activités visant à favoriser la réussite universitaire et le développement des compétences des étudiants."
             ],
-            news: "Lancement des ateliers préparatoires à la sélection locale UIZ.Éloquence et du studio podcast UIZ.CAPS & PODS.",
-            howToJoin: "Adhésion libre toute l'année via la fiche numérique du club pour participer aux ateliers ou rejoindre l'équipe organisatrice.",
-            contact: "Bureau du Club Conférence · Amphithéâtre Principal FEGT"
+            news: "Cycle d'ateliers méthodologiques QCM et préparation aux contrôles continus de mi-semestre.",
+            howToJoin: "Les étudiants intéressés peuvent contacter les responsables du club ou remplir un formulaire d’adhésion, selon les modalités fixées par le bureau.",
+            contact: "Instagram : @club_orientation_pedagogique · Espace d'Accueil FEGT"
+          },
+          {
+            id: "club-ccf",
+            name: "Club Conférence et Formation (CCF)",
+            tagline: "Organisation de conférences, formations professionnelles et masterclasses pour les étudiants.",
+            category: "Conférences & Formation",
+            icon: "fa-chalkboard-user",
+            accentColor: "#2563eb",
+            createdYear: "Club Actif FEGT",
+            responsable: "Bureau Étudiant CCF & Commission Formation FEGT",
+            logoImg: "https://user47431.na.imgto.link/public/20261023/140b60de362ed174f65f6090-282226602-587578306076339-5942621739545708589-n.avif",
+            logoFit: "contain",
+            instagram: "https://www.instagram.com/club.ccf/",
+            instagramHandle: "club.ccf",
+            presentation:
+              "Le Club Conférence et Formation (CCF) de la FEG Taroudant a pour vocation d'enrichir le parcours académique des étudiants par l'organisation de cycles de conférences de haut niveau, d'ateliers pratiques de développement des compétences (soft skills, outils digitaux, techniques de négociation) et de rencontres avec des professionnels et experts renommés.",
+            activities: [
+              "Organisation de conférences thématiques sur l'économie, la finance, le management et l'innovation.",
+              "Ateliers de formation certifiants et masterclasses animés par des praticiens et experts métiers.",
+              "Développement des compétences professionnelles (prise de parole, leadership, outils d'analyse).",
+              "Tables rondes et panels d'échange entre étudiants et acteurs du monde socio-économique."
+            ],
+            news: "Préparation du nouveau cycle de conférences et ateliers thématiques pour l'année universitaire 2026-2027.",
+            howToJoin: "Rejoindre l'équipe d'organisation ou participer aux cycles de formation via la page officielle Instagram @club.ccf.",
+            contact: "Instagram : @club.ccf · Espace d'Accueil & Vie Étudiante FEGT"
           }
         ];
 
@@ -3667,41 +3631,79 @@
           }
           if (clubId === 'club-sport') {
             return (
-              '<svg viewBox="0 0 420 200" class="w-full h-full" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Logo Officiel Club Sport FEG Taroudant">' +
+              '<svg viewBox="0 0 420 200" class="w-full h-full" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Logo Officiel Club Sportif FEG Taroudant">' +
               '<rect width="420" height="200" fill="#064e3b"/>' +
-              '<circle cx="355" cy="45" r="80" fill="#10b981" fill-opacity="0.15"/>' +
+              '<circle cx="355" cy="45" r="80" fill="#10b981" fill-opacity="0.18"/>' +
               '<g transform="translate(38, 38)">' +
               '<path d="M42,4 L80,18 L80,56 C80,84 42,104 42,104 C42,104 4,84 4,56 L4,18 Z" fill="#047857" stroke="#34d399" stroke-width="4"/>' +
               '<circle cx="42" cy="48" r="18" fill="none" stroke="#ffffff" stroke-width="3"/>' +
               '<polygon points="42,36 50,43 47,53 37,53 34,43" fill="#34d399"/>' +
               '<path d="M26,74 Q42,84 58,74" fill="none" stroke="#fbbf24" stroke-width="3" stroke-linecap="round"/>' +
               '</g>' +
-              '<text x="140" y="82" fill="#ffffff" font-family="Plus Jakarta Sans, sans-serif" font-weight="800" font-size="29" letter-spacing="0.5">CLUB SPORT</text>' +
-              '<rect x="140" y="95" width="185" height="3" rx="1.5" fill="#34d399"/>' +
-              '<text x="140" y="122" fill="#6ee7b7" font-family="JetBrains Mono, monospace" font-weight="700" font-size="14" letter-spacing="1.5">FEG TAROUDANT · UIZ</text>' +
-              '<text x="140" y="144" fill="#d1fae5" font-family="Plus Jakarta Sans, sans-serif" font-weight="600" font-size="11">SECTION OFFICIELLE UIZ.SPORT</text>' +
+              '<text x="140" y="78" fill="#ffffff" font-family="Plus Jakarta Sans, sans-serif" font-weight="800" font-size="26" letter-spacing="0.5">CLUB SPORTIF FEG</text>' +
+              '<text x="140" y="100" fill="#34d399" font-family="Plus Jakarta Sans, sans-serif" font-weight="700" font-size="13">ATHLÉTISME &amp; COMPÉTITIONS · 26/27</text>' +
+              '<rect x="140" y="112" width="195" height="2.5" rx="1.2" fill="#fbbf24"/>' +
+              '<text x="140" y="134" fill="#f8fafc" font-family="JetBrains Mono, monospace" font-weight="700" font-size="12">RESP. ABDELLAH ELMOUDEN</text>' +
+              '<text x="140" y="152" fill="#a7f3d0" font-family="JetBrains Mono, monospace" font-weight="600" font-size="11">INSTAGRAM: @club_sportif_feg</text>' +
               '</svg>'
             );
           }
-          if (clubId === 'club-ambassadeurs') {
+          if (clubId === 'youth-ambassadors') {
             return (
-              '<svg viewBox="0 0 420 200" class="w-full h-full" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Logo Officiel Club des Ambassadeurs FEG Taroudant">' +
+              '<svg viewBox="0 0 420 200" class="w-full h-full" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Logo Youth Ambassadors Club FEGT">' +
               '<rect width="420" height="200" fill="#0c2d48"/>' +
-              '<circle cx="350" cy="150" r="85" fill="#0ea5e9" fill-opacity="0.15"/>' +
+              '<circle cx="355" cy="45" r="85" fill="#0ea5e9" fill-opacity="0.18"/>' +
               '<g transform="translate(36, 40)">' +
               '<circle cx="44" cy="48" r="38" fill="#0f2942" stroke="#38bdf8" stroke-width="3.5"/>' +
               '<polygon points="44,18 52,40 74,48 52,56 44,78 36,56 14,48 36,40" fill="#f59e0b"/>' +
               '<circle cx="44" cy="48" r="6" fill="#ffffff"/>' +
               '</g>' +
-              '<text x="136" y="74" fill="#ffffff" font-family="Plus Jakarta Sans, sans-serif" font-weight="800" font-size="22" letter-spacing="0.4">CLUB DES AMBASSADEURS</text>' +
-              '<text x="136" y="98" fill="#38bdf8" font-family="Plus Jakarta Sans, sans-serif" font-weight="700" font-size="14">&amp; ORIENTATION PÉDAGOGIQUE</text>' +
-              '<rect x="136" y="110" width="210" height="2.5" rx="1.2" fill="#f59e0b"/>' +
-              '<text x="136" y="134" fill="#f8fafc" font-family="JetBrains Mono, monospace" font-weight="700" font-size="13" letter-spacing="1.4">FEG TAROUDANT · UIZ</text>' +
+              '<text x="136" y="68" fill="#ffffff" font-family="Plus Jakarta Sans, sans-serif" font-weight="800" font-size="20">YOUTH AMBASSADORS</text>' +
+              '<text x="136" y="90" fill="#38bdf8" font-family="Plus Jakarta Sans, sans-serif" font-weight="700" font-size="15">نادي السفراء الشباب</text>' +
+              '<rect x="136" y="104" width="200" height="2.5" rx="1.2" fill="#f59e0b"/>' +
+              '<text x="136" y="128" fill="#f8fafc" font-family="JetBrains Mono, monospace" font-weight="700" font-size="12">LEADERSHIP &amp; ODD · 2026</text>' +
+              '<text x="136" y="148" fill="#93c5fd" font-family="Plus Jakarta Sans, sans-serif" font-weight="600" font-size="11">RESP. EL MAHDI IFGUISSE</text>' +
+              '</svg>'
+            );
+          }
+          if (clubId === 'csop') {
+            return (
+              '<svg viewBox="0 0 420 200" class="w-full h-full" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Logo CSOP FEGT">' +
+              '<rect width="420" height="200" fill="#2e1065"/>' +
+              '<circle cx="355" cy="45" r="85" fill="#a855f7" fill-opacity="0.18"/>' +
+              '<g transform="translate(38, 40)">' +
+              '<circle cx="44" cy="48" r="38" fill="#3b0764" stroke="#c084fc" stroke-width="3.5"/>' +
+              '<path d="M30,36 Q44,28 58,36 L58,66 Q44,58 30,66 Z" fill="#9333ea"/>' +
+              '<line x1="44" y1="30" x2="44" y2="60" stroke="#f59e0b" stroke-width="2.5"/>' +
+              '</g>' +
+              '<text x="136" y="70" fill="#ffffff" font-family="Plus Jakarta Sans, sans-serif" font-weight="800" font-size="26">CLUB CSOP</text>' +
+              '<text x="136" y="92" fill="#d8b4fe" font-family="Plus Jakarta Sans, sans-serif" font-weight="700" font-size="12">SOUTIEN &amp; ORIENTATION PÉDAGOGIQUE</text>' +
+              '<rect x="136" y="106" width="210" height="2.5" rx="1.2" fill="#f59e0b"/>' +
+              '<text x="136" y="128" fill="#f8fafc" font-family="JetBrains Mono, monospace" font-weight="700" font-size="12">FONDÉ EN 2014 · FEG TAROUDANT</text>' +
+              '<text x="136" y="148" fill="#e9d5ff" font-family="Plus Jakarta Sans, sans-serif" font-weight="600" font-size="11">PRÉSIDENTE : IMANE MOUMINE</text>' +
+              '</svg>'
+            );
+          }
+          if (clubId === 'club-ccf') {
+            return (
+              '<svg viewBox="0 0 420 200" class="w-full h-full" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Logo CCF FEGT">' +
+              '<rect width="420" height="200" fill="#0f172a"/>' +
+              '<circle cx="355" cy="45" r="85" fill="#3b82f6" fill-opacity="0.18"/>' +
+              '<g transform="translate(38, 40)">' +
+              '<circle cx="44" cy="48" r="38" fill="#1e293b" stroke="#60a5fa" stroke-width="3.5"/>' +
+              '<polygon points="44,24 64,48 44,72 24,48" fill="#3b82f6"/>' +
+              '<circle cx="44" cy="48" r="7" fill="#f8fafc"/>' +
+              '</g>' +
+              '<text x="136" y="70" fill="#ffffff" font-family="Plus Jakarta Sans, sans-serif" font-weight="800" font-size="26">CLUB CCF</text>' +
+              '<text x="136" y="92" fill="#93c5fd" font-family="Plus Jakarta Sans, sans-serif" font-weight="700" font-size="12">CONFÉRENCE ET FORMATION · MCI</text>' +
+              '<rect x="136" y="106" width="210" height="2.5" rx="1.2" fill="#38bdf8"/>' +
+              '<text x="136" y="128" fill="#f8fafc" font-family="JetBrains Mono, monospace" font-weight="700" font-size="12">MASTERCLASSES &amp; SOFT SKILLS</text>' +
+              '<text x="136" y="148" fill="#bfdbfe" font-family="JetBrains Mono, monospace" font-weight="600" font-size="11">INSTAGRAM: @club.ccf</text>' +
               '</svg>'
             );
           }
           return (
-            '<svg viewBox="0 0 420 200" class="w-full h-full" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Logo Officiel Club Conférence et Formation FEGT">' +
+            '<svg viewBox="0 0 420 200" class="w-full h-full" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Logo Officiel Club FEGT">' +
             '<rect width="420" height="200" fill="#1e1b4b"/>' +
             '<circle cx="355" cy="45" r="85" fill="#8b5cf6" fill-opacity="0.18"/>' +
             '<g transform="translate(38, 40)">' +
@@ -3711,8 +3713,8 @@
             '<line x1="44" y1="54" x2="44" y2="68" stroke="#ffffff" stroke-width="3"/>' +
             '<line x1="32" y1="68" x2="56" y2="68" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>' +
             '</g>' +
-            '<text x="138" y="76" fill="#ffffff" font-family="Plus Jakarta Sans, sans-serif" font-weight="800" font-size="24" letter-spacing="0.4">CLUB CONFÉRENCE</text>' +
-            '<text x="138" y="100" fill="#c4b5fd" font-family="Plus Jakarta Sans, sans-serif" font-weight="700" font-size="16">&amp; FORMATION · ÉLOQUENCE</text>' +
+            '<text x="138" y="76" fill="#ffffff" font-family="Plus Jakarta Sans, sans-serif" font-weight="800" font-size="24" letter-spacing="0.4">VIE ÉTUDIANTE FEGT</text>' +
+            '<text x="138" y="100" fill="#c4b5fd" font-family="Plus Jakarta Sans, sans-serif" font-weight="700" font-size="16">CLUBS &amp; INITIATIVES</text>' +
             '<rect x="138" y="112" width="195" height="2.5" rx="1.2" fill="#f59e0b"/>' +
             '<text x="138" y="136" fill="#f8fafc" font-family="JetBrains Mono, monospace" font-weight="700" font-size="13" letter-spacing="1.4">FEG TAROUDANT · UIZ</text>' +
             '</svg>'
@@ -3724,38 +3726,83 @@
           if (!grid) return;
 
           grid.innerHTML = CLUBS_DATA.map(function (club) {
+            const activitiesHtml = club.activities && club.activities.length > 0
+              ? '<div class="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">' +
+                '<p class="text-xs font-bold text-[#0f2942] dark:text-amber-400 flex items-center gap-1.5">' +
+                '<i class="fa-solid fa-list-check text-[11px]" aria-hidden="true"></i>' +
+                '<span>Activités phares :</span>' +
+                '</p>' +
+                '<ul class="space-y-1 text-xs text-slate-600 dark:text-slate-300 pl-1">' +
+                club.activities.map(function(act) {
+                  return '<li class="flex items-start gap-1.5"><span class="text-[#d97742] shrink-0 font-bold">•</span><span>' + act + '</span></li>';
+                }).join('') +
+                '</ul>' +
+                '</div>'
+              : '';
+
+            const joinHtml = club.howToJoin
+              ? '<div class="pt-2 text-xs text-slate-600 dark:text-slate-300">' +
+                '<p><strong class="text-slate-800 dark:text-slate-200">Manière d\'adhérer :</strong> ' + club.howToJoin + '</p>' +
+                '</div>'
+              : '';
+
+            const instagramBtn = club.instagram
+              ? '<a href="' + club.instagram + '" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 hover:opacity-90 text-white text-xs font-bold shadow-xs transition-opacity">' +
+                '<i class="fa-brands fa-instagram text-sm" aria-hidden="true"></i>' +
+                '<span>' + (club.instagramHandle ? '@' + club.instagramHandle.replace('@', '') : 'Instagram Officiel') + ' ↗</span>' +
+                '</a>'
+              : '';
+
+            const logoVisual = club.logoImg
+              ? '<img src="' + club.logoImg + '" alt="Logo officiel ' + club.name + '" class="' +
+                (club.logoFit === 'cover'
+                  ? 'w-full h-full object-cover transition-transform duration-500 group-hover:scale-105'
+                  : 'max-h-[82%] max-w-[82%] w-auto h-auto object-contain drop-shadow-sm transition-transform duration-300 group-hover:scale-105') +
+                '" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display=\'none\'; if(this.nextElementSibling){this.nextElementSibling.style.display=\'flex\';}" />' +
+                '<div style="display:none;" class="w-full h-full items-center justify-center">' + getClubOfficialLogoSvg(club.id) + '</div>'
+              : getClubOfficialLogoSvg(club.id);
+
+            const bannerBgClass = club.logoFit === 'cover'
+              ? 'bg-slate-950'
+              : 'bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800';
+
             return (
-              '<article class="card-3d bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">' +
+              '<article class="card-3d group bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between transition-all hover:shadow-md">' +
               '<div>' +
-              '<div class="aspect-[16/9] overflow-hidden bg-slate-900 relative flex items-center justify-center">' +
-              getClubOfficialLogoSvg(club.id) +
-              '<span class="absolute bottom-2.5 left-4 text-[10px] font-bold uppercase tracking-wider text-amber-300 bg-black/40 px-2.5 py-0.5 rounded backdrop-blur-sm">' +
+              '<div class="aspect-[16/9] overflow-hidden ' + bannerBgClass + ' relative flex items-center justify-center">' +
+              logoVisual +
+              '<span class="absolute bottom-2.5 left-4 text-[10px] font-bold uppercase tracking-wider text-white bg-slate-950/80 px-2.5 py-0.5 rounded shadow-xs backdrop-blur-sm">' +
               club.category +
               '</span>' +
-              '<span class="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-white/10 text-white text-[10px] font-mono font-bold border border-white/15 backdrop-blur-sm">' +
-              'LOGO OFFICIEL' +
+              '<span class="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-slate-950/75 text-amber-300 text-[10px] font-mono font-bold border border-white/10 backdrop-blur-sm">' +
+              (club.createdYear || 'LOGO OFFICIEL') +
               '</span>' +
               '</div>' +
               '<div class="p-6 space-y-3">' +
+              '<div>' +
               '<h3 class="font-serif text-xl font-bold text-[#0f2942] dark:text-white">' +
               club.name +
               '</h3>' +
-              '<p class="text-xs font-semibold text-slate-700 dark:text-slate-200">' +
+              '<p class="text-xs font-semibold text-[#d97742] mt-0.5">' +
               club.tagline +
               '</p>' +
+              '</div>' +
               '<p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">' +
               club.presentation +
               '</p>' +
+              activitiesHtml +
+              joinHtml +
               '<div class="pt-3 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 space-y-1.5">' +
               '<p><strong class="text-slate-700 dark:text-slate-300">Responsable :</strong> ' +
               club.responsable +
               '</p>' +
-              '<p><strong class="text-slate-700 dark:text-slate-300">Lieu de permanence :</strong> ' +
+              '<p><strong class="text-slate-700 dark:text-slate-300">Contact :</strong> ' +
               club.contact +
               '</p>' +
               '</div>' +
               '</div>' +
               '</div>' +
+              (instagramBtn ? '<div class="px-6 pb-6 pt-1 flex items-center justify-between">' + instagramBtn + '</div>' : '') +
               '</article>'
             );
           }).join('');
@@ -5286,6 +5333,133 @@
             { title: 'enssup.gov.ma/fr', uri: 'https://www.enssup.gov.ma/fr' }
           ];
 
+          // 1. Détection problème ou interrogation sur le fonctionnement du chatbot
+          if (
+            q.includes('chatbot') ||
+            q.includes('bot') ||
+            q.includes('marche pas') ||
+            q.includes('fonctionne pas') ||
+            q.includes('bug') ||
+            q.includes('problème') ||
+            q.includes('probleme')
+          ) {
+            return {
+              reply:
+                "**Je fonctionne à 100% et je suis à votre entière disposition !**\n\n" +
+                "Je suis l'**Assistant Numérique Officiel** de la **Faculté d'Économie et de Gestion de Taroudant (FEGT)**, de l'**Université Ibn Zohr (UIZ)** et du **Ministère de l'Enseignement Supérieur (ENSSUP)**.\n\n" +
+                "Voici les accès directs aux plateformes officielles les plus sollicitées :\n" +
+                "- 🌐 **Plateforme de Langues & Certification I.LOGHA Sup** : [https://elogha-sup.uiz.ac.ma/](https://elogha-sup.uiz.ac.ma/)\n" +
+                "- 🎓 **Bourses de l'Enseignement Supérieur (MINHATY)** : [https://www.minhaty.ma/](https://www.minhaty.ma/)\n" +
+                "- 🔄 **Changement de Filière FEG (Plateforme ENE)** : [https://ene.fpt.ac.ma/#/login/feg?redirect=%2Ffpt%2FchangeFiliere](https://ene.fpt.ac.ma/#/login/feg?redirect=%2Ffpt%2FchangeFiliere)\n" +
+                "- 🔑 **Connexion Espace Numérique de Travail (ENT MyUIZ)** : [https://www.uiz.ac.ma/user/login](https://www.uiz.ac.ma/user/login)\n\n" +
+                "Vous pouvez également tester vos notes sur notre **Simulateur de Notes & Compensation** (moyenne ≥ 10/20, aucune note < 5/20) ou me poser vos questions sur les filières et inscriptions.",
+              sources: [
+                { title: 'I.LOGHA Sup UIZ', uri: 'https://elogha-sup.uiz.ac.ma/' },
+                { title: 'Portail Minhaty', uri: 'https://www.minhaty.ma/' },
+                { title: 'ENE FEG Changement de Filière', uri: 'https://ene.fpt.ac.ma/#/login/feg?redirect=%2Ffpt%2FchangeFiliere' },
+                { title: 'Connexion ENT UIZ', uri: 'https://www.uiz.ac.ma/user/login' }
+              ]
+            };
+          }
+
+          // 2. I.LOGHA Sup : Plateforme des langues de l'UIZ
+          if (
+            q.includes('elogha') ||
+            q.includes('i.logha') ||
+            q.includes('logha') ||
+            q.includes('langue') ||
+            q.includes('anglais') ||
+            q.includes('certification') ||
+            q.includes('positionnement')
+          ) {
+            return {
+              reply:
+                "**Plateforme I.LOGHA Sup · Apprentissage et Certification Linguistique (UIZ)** :\n\n" +
+                "- **Lien d'accès officiel direct** : [https://elogha-sup.uiz.ac.ma/](https://elogha-sup.uiz.ac.ma/)\n" +
+                "- **Objectif** : Développer et certifier vos compétences en langues étrangères (Français, Anglais, Espagnol) dans le cadre de la réforme pédagogique nationale LMD.\n" +
+                "- **Test de positionnement obligatoire** : Tout nouvel inscrit à la FEGT doit passer son évaluation initiale en ligne dès la rentrée universitaire.\n" +
+                "- **Modalités d'accès** : Connectez-vous avec votre adresse institutionnelle UIZ (`...@uiz.ac.ma`) ou vos identifiants ENT remis lors de votre inscription.",
+              sources: [
+                { title: 'I.LOGHA Sup UIZ', uri: 'https://elogha-sup.uiz.ac.ma/' },
+                { title: 'Portail Officiel FEGT', uri: 'https://www.fegt.uiz.ac.ma/' }
+              ]
+            };
+          }
+
+          // 3. Changement de Filière FEG (Plateforme ENE)
+          if (
+            q.includes('changement') ||
+            q.includes('changer de filiere') ||
+            q.includes('changer de filière') ||
+            q.includes('réorientation') ||
+            q.includes('reorientation') ||
+            q.includes('ene.fpt') ||
+            q.includes('changefiliere')
+          ) {
+            return {
+              reply:
+                "**Demande de Changement de Filière · FEG Taroudant (Plateforme Numérique ENE)** :\n\n" +
+                "- **Lien officiel direct de candidature** : [https://ene.fpt.ac.ma/#/login/feg?redirect=%2Ffpt%2FchangeFiliere](https://ene.fpt.ac.ma/#/login/feg?redirect=%2Ffpt%2FchangeFiliere)\n" +
+                "- **Filières concernées** : Passerelles entre la Licence en Gestion, E-Business et Marketing Digital (**GEMD**), la Licence en Management et Gestion des Entreprises (**MGE**) et la Licence en Entrepreneuriat et Développement des Business (**ENDEB**).\n" +
+                "- **Procédure** :\n" +
+                "  1. Connectez-vous sur la plateforme ENE avec votre Code Massar (CNE) et mot de passe.\n" +
+                "  2. Renseignez la filière actuelle et la filière souhaitée.\n" +
+                "  3. Validez la demande dans les délais fixés par le calendrier officiel de la Scolarité FEGT.",
+              sources: [
+                { title: 'Plateforme ENE Changement Filière', uri: 'https://ene.fpt.ac.ma/#/login/feg?redirect=%2Ffpt%2FchangeFiliere' },
+                { title: 'FEG Taroudant — Scolarité', uri: 'https://www.fegt.uiz.ac.ma/' }
+              ]
+            };
+          }
+
+          // 4. Bourses Nationales de l'Enseignement Supérieur (MINHATY)
+          if (
+            q.includes('minhati') ||
+            q.includes('minhaty') ||
+            q.includes('bourse') ||
+            q.includes('onousc')
+          ) {
+            return {
+              reply:
+                "**Bourses de l'Enseignement Supérieur · Portail National MINHATY** :\n\n" +
+                "- **Lien officiel direct** : [https://www.minhaty.ma/](https://www.minhaty.ma/)\n" +
+                "- **Gestion ministérielle** : Piloté par le Ministère de l'Enseignement Supérieur (**ENSSUP** — [enssup.gov.ma/fr](https://www.enssup.gov.ma/fr)) et l'ONOUSC.\n" +
+                "- **Fonctionnalités** : Dépôt des demandes de bourses pour les nouveaux bacheliers, consultation des listes de boursiers retenus et suivi des versements trimestriels.\n" +
+                "- **Rôle de la FEGT** : Le Service de la Scolarité de la FEG Taroudant valide l'assiduité et l'inscription pédagogique requises pour le déblocage des tranches de bourse.",
+              sources: [
+                { title: 'Portail National Minhaty', uri: 'https://www.minhaty.ma/' },
+                { title: 'Ministère ENSSUP', uri: 'https://www.enssup.gov.ma/fr' }
+              ]
+            };
+          }
+
+          // 5. Connexion Espace Numérique de Travail (ENT / MyUIZ Login)
+          if (
+            q.includes('login') ||
+            q.includes('connexion') ||
+            q.includes('connecter') ||
+            q.includes('ent') ||
+            q.includes('myuiz') ||
+            q.includes('compte uiz') ||
+            q.includes('mot de passe')
+          ) {
+            return {
+              reply:
+                "**Connexion Espace Numérique de Travail (ENT) & MyUIZ · Université Ibn Zohr** :\n\n" +
+                "- **Lien d'authentification officiel direct** : [https://www.uiz.ac.ma/user/login](https://www.uiz.ac.ma/user/login)\n" +
+                "- **Services accessibles avec votre compte unifié** :\n" +
+                "  • **e-Scolarité / MyUIZ** : consultation des notes d'examens, attestations de scolarité en ligne, réinscriptions semestrielles.\n" +
+                "  • **Plateforme I.LOGHA Sup** ([https://elogha-sup.uiz.ac.ma/](https://elogha-sup.uiz.ac.ma/)) : cours et tests de langues.\n" +
+                "  • **E-mail institutionnel & Google Classroom**.\n" +
+                "  • **Wi-Fi sécurisé du campus FEGT**.\n" +
+                "- **Identifiants** : Utilisez votre adresse académique et le mot de passe initialisé avec votre Code Massar.",
+              sources: [
+                { title: 'Connexion ENT UIZ', uri: 'https://www.uiz.ac.ma/user/login' },
+                { title: 'Portail FEG Taroudant', uri: 'https://www.fegt.uiz.ac.ma/' }
+              ]
+            };
+          }
+
           if (
             q.includes('compensation') ||
             q.includes('valid') ||
@@ -5301,7 +5475,7 @@
               reply:
                 "Conformément au cahier des normes pédagogiques nationales (**ENSSUP** — [enssup.gov.ma/fr](https://www.enssup.gov.ma/fr)) appliqué à l'**Université Ibn Zohr** ([uiz.ac.ma](https://www.uiz.ac.ma/)) et à la **FEG Taroudant** ([fegt.uiz.ac.ma](https://www.fegt.uiz.ac.ma/)) :\n\n" +
                 "- **Validation d'un module** : Un module est acquis directement dès que la note est **≥ 10/20**.\n" +
-                "- **Validation du semestre par compensation** : Un semestre (composé de 6 modules) est validé par compensation si la **moyenne générale des 6 modules est ≥ 10/20** (soit ≥ 60 points sur 120) **ET** qu'**aucune note de module n'est strictement inférieure à 5/20** (seuil éliminatoire).\n" +
+                "- **Validation du semestre par compensation** : Un semestre (composé des modules accrédités) est validé par compensation si la **moyenne générale du semestre est ≥ 10/20** **ET** qu'**aucune note de module n'est strictement inférieure à 5/20** (seuil éliminatoire).\n" +
                 "- **Mentions officielles** : **Passable** (10 à 11,99/20), **Assez Bien** (12 à 13,99/20), **Bien** (14 à 15,99/20), **Très Bien** (≥ 16/20).\n\n" +
                 "Vous pouvez tester vos notes en direct sur notre **Simulateur de Validation de Semestre & Mention FEGT** présent sur cette page (section *Simulateur Notes*).",
               sources: defaultSources
@@ -5328,8 +5502,13 @@
                 "2. **Licence MGE (Management et Gestion des Entreprises)** : Tronc commun S1–S4, puis spécialisation S5–S6 en GRH, Contrôle de gestion, Gestion financière, Audit général, Fiscalité approfondie, ERP et PFE.\n" +
                 "3. **Licence ENDEB (Entrepreneuriat et Développement des Business)** : Tronc commun S1–S4, puis spécialisation S5–S6 en Business Model, Financement des jeunes entreprises, Management de l'innovation, Création d'entreprise et PFE.\n" +
                 "4. **Master MCI (Management et Commerce International)** : Accès sur étude de dossier et concours post-Licence. Modules en Commerce international, Logistique & Douane, Finance internationale, Supply Chain globale et Mémoire/Stage.\n\n" +
+                "Pour changer de filière entre Licences FEG, utilisez la plateforme dédiée : [https://ene.fpt.ac.ma/#/login/feg?redirect=%2Ffpt%2FchangeFiliere](https://ene.fpt.ac.ma/#/login/feg?redirect=%2Ffpt%2FchangeFiliere).\n\n" +
                 "Les 4 **Fiches Descriptives Officielles PDF** sont téléchargeables dans la section **Filières** de ce portail.",
-              sources: defaultSources
+              sources: [
+                { title: 'Filières FEGT Officielles', uri: 'https://www.fegt.uiz.ac.ma/' },
+                { title: 'Changement Filière ENE', uri: 'https://ene.fpt.ac.ma/#/login/feg?redirect=%2Ffpt%2FchangeFiliere' },
+                { title: 'Université Ibn Zohr', uri: 'https://www.uiz.ac.ma/' }
+              ]
             };
           }
 
@@ -5347,8 +5526,12 @@
                 "Selon les procédures officielles de l'**Université Ibn Zohr** ([uiz.ac.ma](https://www.uiz.ac.ma/)) et de la **FEG Taroudant** ([fegt.uiz.ac.ma](https://www.fegt.uiz.ac.ma/)) :\n\n" +
                 "- **Étape 1 (Préinscription en ligne)** : Enregistrement sur la plateforme officielle de préinscription de l'UIZ.\n" +
                 "- **Étape 2 (Dépôt du dossier administratif)** : Dépôt au **Guichet de Scolarité de la FEG Taroudant** selon le calendrier officiel affiché sur [fegt.uiz.ac.ma](https://www.fegt.uiz.ac.ma/) (original du Baccalauréat, copies certifiées, copie CIN, photos d'identité et reçu de préinscription).\n" +
-                "- **Étape 3 (Activation numérique)** : Retrait de la carte d'étudiant, activation de l'espace **MyUIZ** et test linguistique sur **I.LOGHA**.",
-              sources: defaultSources
+                "- **Étape 3 (Activation numérique & Test de Langue)** : Retrait de la carte d'étudiant, activation de l'espace **MyUIZ** ([https://www.uiz.ac.ma/user/login](https://www.uiz.ac.ma/user/login)) et test linguistique sur **I.LOGHA Sup** ([https://elogha-sup.uiz.ac.ma/](https://elogha-sup.uiz.ac.ma/)).",
+              sources: [
+                { title: 'Préinscription UIZ', uri: 'https://www.uiz.ac.ma/' },
+                { title: 'Connexion ENT UIZ', uri: 'https://www.uiz.ac.ma/user/login' },
+                { title: 'I.LOGHA Sup', uri: 'https://elogha-sup.uiz.ac.ma/' }
+              ]
             };
           }
 
@@ -5367,8 +5550,8 @@
             return {
               reply:
                 "Voici les procédures officielles des services aux étudiants (**FEGT / UIZ / ENSSUP**) :\n\n" +
-                "- **Certificat de scolarité & Relevé de notes** : Demande en ligne via l'application **MyUIZ / e-Scolarité** ou auprès du guichet de scolarité FEGT (du lundi au vendredi, 09h00–15h30) sur présentation de la carte d'étudiant.\n" +
-                "- **Bourses universitaires (MINHATI / ONOUSC)** : Dépôt et suivi sur les plateformes du Ministère ([enssup.gov.ma/fr](https://www.enssup.gov.ma/fr)). Les versements trimestriels sont liés à la validation pédagogique transmise par la Scolarité.\n" +
+                "- **Certificat de scolarité & Relevé de notes** : Demande en ligne via l'application **MyUIZ / e-Scolarité** ([https://www.uiz.ac.ma/user/login](https://www.uiz.ac.ma/user/login)) ou auprès du guichet de scolarité FEGT (du lundi au vendredi, 09h00–15h30) sur présentation de la carte d'étudiant.\n" +
+                "- **Bourses universitaires (MINHATY / ONOUSC)** : Dépôt et suivi sur le portail officiel [https://www.minhaty.ma/](https://www.minhaty.ma/). Les versements trimestriels sont liés à la validation pédagogique transmise par la Scolarité.\n" +
                 "- **Assurance Maladie Obligatoire (AMO Étudiant)** : Inscription annuelle en ligne via l'ENT de l'Université Ibn Zohr ([uiz.ac.ma](https://www.uiz.ac.ma/)).",
               sources: defaultSources
             };
@@ -5379,22 +5562,67 @@
             q.includes('vie étudiante') ||
             q.includes('vie etudiante') ||
             q.includes('enactus') ||
+            q.includes('boukedir') ||
+            q.includes('fatima') ||
             q.includes('hult') ||
+            q.includes('boubrik') ||
+            q.includes('loubna') ||
             q.includes('sport') ||
+            q.includes('elmouden') ||
             q.includes('ambassadeur') ||
+            q.includes('ifguisse') ||
+            q.includes('csop') ||
+            q.includes('moumine') ||
+            q.includes('orientation pedagogique') ||
+            q.includes('orientation pédagogique') ||
+            q.includes('ccf') ||
+            q.includes('conférence') ||
+            q.includes('conference') ||
+            q.includes('formation') ||
             q.includes('activité') ||
             q.includes('activite')
           ) {
             return {
               reply:
-                "La vie associative et parauniversitaire à la **FEG Taroudant** ([fegt.uiz.ac.ma](https://www.fegt.uiz.ac.ma/)) s'articule autour de **5 clubs officiels** :\n\n" +
-                "1. **ENACTUS FEG Taroudant** (entrepreneuriat social et projets à impact)\n" +
-                "2. **Hult Prize FEG Taroudant** (compétition internationale de startups étudiantes)\n" +
-                "3. **Club Sport FEGT** (tournois sportifs universitaires collectifs et individuels)\n" +
-                "4. **Club des Ambassadeurs et de l'Orientation Pédagogique** (accueil des nouveaux étudiants et mentorat par les pairs)\n" +
-                "5. **Club Conférence et Formation** (séminaires, soft skills et employabilité)\n\n" +
-                "Tout étudiant peut également proposer une activité en suivant le parcours officiel en 7 étapes : **IDÉE → PROPOSITION → VALIDATION → ORGANISATION → COMMUNICATION → ACTIVITÉ → BILAN**.",
-              sources: defaultSources
+                "**Les 6 Clubs Étudiants Officiels de la FEG Taroudant (UIZ)** :\n\n" +
+                "1. **Club Sportif FEG** (Saison 2026/2027) :\n" +
+                "   - **Responsable** : Abdellah Elmouden\n" +
+                "   - **Activités** : Activités sportives et athlétisme, tournois universitaires (futsal, basket, volley) et championnats UIZ.Sport.\n" +
+                "   - **Instagram** : [https://www.instagram.com/club_sportif_feg/](https://www.instagram.com/club_sportif_feg/)\n\n" +
+                "2. **Youth Ambassadors Club - نادي السفراء الشباب** (Création : 2026) :\n" +
+                "   - **Responsable** : El Mahdi Ifguisse\n" +
+                "   - **Activités** : Formation de jeunes ambassadeurs (leadership, plaidoyer, art oratoire), diffusion des Objectifs de Développement Durable (ODD), compétences médias & IA, initiatives de jeunes et ouverture sur les expériences internationales (MUN).\n" +
+                "   - **Adhésion** : Formulaire d'inscription électronique & contact du bureau dirigeant.\n" +
+                "   - **Instagram** : [https://www.instagram.com/youth_ambassadors.club](https://www.instagram.com/youth_ambassadors.club?rpxt=c3ZnYTMwOHp4eWFp)\n\n" +
+                "3. **Club de Soutien et d’Orientation Pédagogique (CSOP)** (Fondé en 2014) :\n" +
+                "   - **Responsable** : Imane Moumine, présidente du club\n" +
+                "   - **Activités** : Ateliers de préparation aux examens, accompagnement et parrainage pédagogique, méthodologie des QCM, conférences éducatives et gestion du stress.\n" +
+                "   - **Adhésion** : Formulaire d'adhésion auprès du bureau CSOP.\n" +
+                "   - **Instagram** : [https://www.instagram.com/club_orientation_pedagogique](https://www.instagram.com/club_orientation_pedagogique?rpxt=NWR3Ym9uaXJ3bXJr)\n\n" +
+                "4. **Club Conférence et Formation (CCF)** (Club Actif FEGT) :\n" +
+                "   - **Responsable** : Bureau Étudiant CCF & Commission Formation FEGT\n" +
+                "   - **Activités** : Organisation de conférences de haut niveau, masterclasses, formations certifiantes et ateliers de soft skills.\n" +
+                "   - **Instagram** : [https://www.instagram.com/club.ccf/](https://www.instagram.com/club.ccf/)\n\n" +
+                "5. **EF Hult Prize FEGT** (Création : 2025) :\n" +
+                "   - **Responsable** : Loubna Boubrik, présidente du club\n" +
+                "   - **Activités** : Encouragement de l'innovation, entrepreneuriat social, créativité, compétitions Hult Prize et résolution des défis mondiaux.\n" +
+                "   - **Modalités d'adhésion** : Demande écrite signée acceptée par le bureau du club, puis confirmation par l'attribution d'une carte d'adhésion.\n" +
+                "   - **Instagram** : [https://www.instagram.com/ef_hprize.fegt/](https://www.instagram.com/ef_hprize.fegt/)\n\n" +
+                "6. **Enactus FEG Taroudant (Faculté d’Économie et de Gestion de Taroudant)** :\n" +
+                "   - **Responsable** : Fatima Boukedir\n" +
+                "   - **Affiliation** : Club affilié au réseau Enactus Morocco\n" +
+                "   - **Activités** : Formations (Idéation, Design Thinking, BMC, Prototyping, Sales, Marketing), sorties de terrain, visites d'entreprises et développement de projets d'entrepreneuriat social.\n" +
+                "   - **Modalités d'adhésion** : Remplir le formulaire d'adhésion du club au début de l'année universitaire, puis intégrer les groupes de communication officiels des membres.\n" +
+                "   - **Instagram** : [https://www.instagram.com/enactusfegtrd/](https://www.instagram.com/enactusfegtrd/)",
+              sources: [
+                { title: 'Instagram Club Sportif FEG', uri: 'https://www.instagram.com/club_sportif_feg/' },
+                { title: 'Instagram Youth Ambassadors', uri: 'https://www.instagram.com/youth_ambassadors.club?rpxt=c3ZnYTMwOHp4eWFp' },
+                { title: 'Instagram CSOP', uri: 'https://www.instagram.com/club_orientation_pedagogique?rpxt=NWR3Ym9uaXJ3bXJr' },
+                { title: 'Instagram CCF', uri: 'https://www.instagram.com/club.ccf/' },
+                { title: 'Instagram EF Hult Prize FEGT', uri: 'https://www.instagram.com/ef_hprize.fegt/' },
+                { title: 'Instagram Enactus FEGT', uri: 'https://www.instagram.com/enactusfegtrd/' },
+                { title: 'Portail FEG Taroudant', uri: 'https://www.fegt.uiz.ac.ma/' }
+              ]
             };
           }
 
@@ -5436,22 +5664,38 @@
             return {
               reply:
                 "Bonjour et bienvenue ! Je suis le **Représentant Numérique Officiel** de l'**Université Ibn Zohr (UIZ)**, de la **FEG Taroudant (FEGT)** et du **Ministère de l'Enseignement Supérieur (ENSSUP)**.\n\n" +
-                "Vous pouvez m'interroger sur :\n" +
-                "- Les **4 filières accréditées** (Licences GEMD, MGE, ENDEB et Master MCI) et leurs modules\n" +
-                "- Les **règles de validation de semestre, compensation (≥ 10/20 sans note < 5/20) et mentions**\n" +
-                "- Les **inscriptions, certificats de scolarité, relevés de notes et bourses MINHATI**\n" +
-                "- La **gouvernance, les horaires, l'adresse et les 5 clubs étudiants** de la FEG Taroudant.",
-              sources: defaultSources
+                "Voici les portails institutionnels essentiels accessibles directement :\n" +
+                "- 🌐 **Langues & Certification I.LOGHA Sup** : [https://elogha-sup.uiz.ac.ma/](https://elogha-sup.uiz.ac.ma/)\n" +
+                "- 🎓 **Bourses Étudiantes Minhaty** : [https://www.minhaty.ma/](https://www.minhaty.ma/)\n" +
+                "- 🔄 **Changement de Filière ENE** : [https://ene.fpt.ac.ma/#/login/feg?redirect=%2Ffpt%2FchangeFiliere](https://ene.fpt.ac.ma/#/login/feg?redirect=%2Ffpt%2FchangeFiliere)\n" +
+                "- 🔑 **Espace Numérique ENT MyUIZ** : [https://www.uiz.ac.ma/user/login](https://www.uiz.ac.ma/user/login)\n" +
+                "- 🧮 **Simulateur de Notes & Compensation** : testez vos notes (moyenne ≥ 10/20, aucune note < 5/20)\n\n" +
+                "Posez-moi votre question ou cliquez sur un des boutons suggérés ci-dessus.",
+              sources: [
+                { title: 'I.LOGHA Sup UIZ', uri: 'https://elogha-sup.uiz.ac.ma/' },
+                { title: 'Portail Minhaty', uri: 'https://www.minhaty.ma/' },
+                { title: 'ENE FEG Changement Filière', uri: 'https://ene.fpt.ac.ma/#/login/feg?redirect=%2Ffpt%2FchangeFiliere' },
+                { title: 'Connexion ENT UIZ', uri: 'https://www.uiz.ac.ma/user/login' }
+              ]
             };
           }
 
           return {
             reply:
-              "Cette information spécifique ne figure pas dans les données actuellement publiées sur les portails officiels de référence. Conformément aux directives institutionnelles, je vous invite à consulter directement les plateformes officielles :\n\n" +
-              "- **Faculté d'Économie et de Gestion de Taroudant (FEGT)** : [https://www.fegt.uiz.ac.ma/](https://www.fegt.uiz.ac.ma/)\n" +
-              "- **Université Ibn Zohr (UIZ)** : [https://www.uiz.ac.ma/](https://www.uiz.ac.ma/)\n" +
-              "- **Ministère de l'Enseignement Supérieur (ENSSUP)** : [https://www.enssup.gov.ma/fr](https://www.enssup.gov.ma/fr)",
-            sources: defaultSources
+              "Voici les informations officielles de référence relatives à votre demande (**FEGT / UIZ / ENSSUP**) :\n\n" +
+              "Vous pouvez accéder directement aux services et plateformes concernés :\n" +
+              "- **Plateforme I.LOGHA Sup (Langues & Certification)** : [https://elogha-sup.uiz.ac.ma/](https://elogha-sup.uiz.ac.ma/)\n" +
+              "- **Bourses Nationales Minhaty** : [https://www.minhaty.ma/](https://www.minhaty.ma/)\n" +
+              "- **Changement de Filière FEG (Plateforme ENE)** : [https://ene.fpt.ac.ma/#/login/feg?redirect=%2Ffpt%2FchangeFiliere](https://ene.fpt.ac.ma/#/login/feg?redirect=%2Ffpt%2FchangeFiliere)\n" +
+              "- **Espace Numérique ENT / MyUIZ** : [https://www.uiz.ac.ma/user/login](https://www.uiz.ac.ma/user/login)\n" +
+              "- **Portail Officiel FEG Taroudant** : [https://www.fegt.uiz.ac.ma/](https://www.fegt.uiz.ac.ma/)\n\n" +
+              "Vous pouvez également tester vos notes sur notre **Simulateur de Notes & Compensation** (règle des 10/20 sans note < 5/20).",
+            sources: [
+              { title: 'I.LOGHA Sup UIZ', uri: 'https://elogha-sup.uiz.ac.ma/' },
+              { title: 'Portail Minhaty', uri: 'https://www.minhaty.ma/' },
+              { title: 'ENE FEG Changement Filière', uri: 'https://ene.fpt.ac.ma/#/login/feg?redirect=%2Ffpt%2FchangeFiliere' },
+              { title: 'Connexion ENT UIZ', uri: 'https://www.uiz.ac.ma/user/login' }
+            ]
           };
         }
 
@@ -5488,17 +5732,23 @@
           let isSending = false;
 
           function formatMessageHtml(rawText) {
-            const escaped = String(rawText || '')
+            let escaped = String(rawText || '')
               .replace(/&/g, '&amp;')
               .replace(/</g, '&lt;')
               .replace(/>/g, '&gt;');
-            return escaped
-              .replace(
-                /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
-                '<a href="$2" target="_blank" rel="noopener noreferrer" class="underline font-semibold text-[#d97742] hover:text-[#f59e0b]">$1</a>'
-              )
-              .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-              .replace(/\n/g, '<br />');
+            // Convert markdown [text](url)
+            escaped = escaped.replace(
+              /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+              '<a href="$2" target="_blank" rel="noopener noreferrer" class="underline font-bold text-[#d97742] dark:text-[#f59e0b] hover:opacity-85">$1 ↗</a>'
+            );
+            // Convert bare URLs not preceded by href="
+            escaped = escaped.replace(
+              /(^|[\s(])(https?:\/\/[^\s<)]+)/g,
+              '$1<a href="$2" target="_blank" rel="noopener noreferrer" class="underline font-mono text-[11px] text-[#d97742] dark:text-[#f59e0b] hover:opacity-85 break-all">$2 ↗</a>'
+            );
+            escaped = escaped.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            escaped = escaped.replace(/\n/g, '<br />');
+            return escaped;
           }
 
           function renderMessages() {
@@ -5664,6 +5914,8 @@
             });
           });
 
+          window.toggleOfficialChat = toggleChatPanel;
+          window.sendOfficialChatMessage = sendChatMessage;
           renderMessages();
         }
 
