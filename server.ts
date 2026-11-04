@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -20,11 +21,11 @@ Guidelines for your responses:
 
 Official Reference Data from https://www.fegt.uiz.ac.ma/, https://www.uiz.ac.ma/, and https://www.enssup.gov.ma/fr :
 - Institution: Faculté d'Économie et de Gestion de Taroudant (FEGT), relevant de l'Université Ibn Zohr (UIZ) et du Ministère de l'Enseignement Supérieur, de la Recherche Scientifique et de l'Innovation (ENSSUP). Adresse : Hay Lmhaita, BP 271, 83000 Taroudant, Maroc.
-- Offre de formation accréditée à la FEG Taroudant :
-  1. Licence en Gestion, E-Business et Marketing Digital (GEMD) — 6 semestres (S1 à S6), condition d'accès : Baccalauréat. S1-S4 tronc commun (Comptabilité générale I & II, Management I & II, Microéconomie, Macroéconomie, Statistique descriptive, Probabilités, Droit commercial, Fiscalité, Analyse financière, Informatique de gestion, Marketing de base & approfondi). S5 : Marketing Digital, Fondamentaux du E-Business, Comportement du consommateur, Gestion de la force de vente, Contrôle de gestion, Management de projet. S6 : Stratégies digitales, Entrepreneuriat digital, E-CRM, E-Logistique, Anglais des affaires, Projet de Fin d'Études (PFE).
-  2. Licence en Management et Gestion des Entreprises (MGE) — 6 semestres (S1 à S6), condition d'accès : Baccalauréat. S1-S4 tronc commun. S5 : GRH, Contrôle de gestion, Gestion financière, Gestion de la production, Management stratégique, Droit des affaires. S6 : Audit général, Fiscalité approfondie, Entrepreneuriat, ERP, PFE.
-  3. Licence en Entrepreneuriat et Développement des Business (ENDEB) — 6 semestres (S1 à S6), condition d'accès : Baccalauréat. S1-S4 tronc commun. S5 : Business Model & Plan d'affaires, Financement des jeunes entreprises, Marketing entrepreneurial, Management de l'innovation, Droit des sociétés, Gestion de projet. S6 : Création d'entreprise & Incubation, Stratégie de croissance, Transformation digitale des PME, Leadership, PFE.
-  4. Master en Management et Commerce International (MCI) — 4 semestres (M1-S1 à M2-S4), accès sur étude de dossier et concours (Licence en Économie, Gestion, Management ou équivalent). Modules : Environnement économique international, Marketing international, Logistique internationale & Douane, Finance internationale, Droit du commerce international, Négociation commerciale internationale, Supply Chain globale, Stage & Mémoire de recherche/professionnel.
+- Offre de formation accréditée à la FEG Taroudant (3 Filières de Licence & 1 Cycle Master — le Master est un cycle supérieur et non une filière de Licence) :
+  1. Filière Licence en Gestion, E-Business et Marketing Digital (GEMD) — 6 semestres (S1 à S6), condition d'accès : Baccalauréat. S1-S4 tronc commun (Comptabilité générale I & II, Management I & II, Microéconomie, Macroéconomie, Statistique descriptive, Probabilités, Droit commercial, Fiscalité, Analyse financière, Informatique de gestion, Marketing de base & approfondi). S5 : Marketing Digital, Fondamentaux du E-Business, Comportement du consommateur, Gestion de la force de vente, Contrôle de gestion, Management de projet. S6 : Stratégies digitales, Entrepreneuriat digital, E-CRM, E-Logistique, Anglais des affaires, Projet de Fin d'Études (PFE).
+  2. Filière Licence en Management et Gestion des Entreprises (MGE) — 6 semestres (S1 à S6), condition d'accès : Baccalauréat. S1-S4 tronc commun. S5 : GRH, Contrôle de gestion, Gestion financière, Gestion de la production, Management stratégique, Droit des affaires. S6 : Audit général, Fiscalité approfondie, Entrepreneuriat, ERP, PFE.
+  3. Filière Licence en Entrepreneuriat et Développement des Business (ENDEB) — 6 semestres (S1 à S6), condition d'accès : Baccalauréat. S1-S4 tronc commun. S5 : Business Model & Plan d'affaires, Financement des jeunes entreprises, Marketing entrepreneurial, Management de l'innovation, Droit des sociétés, Gestion de projet. S6 : Création d'entreprise & Incubation, Stratégie de croissance, Transformation digitale des PME, Leadership, PFE.
+  4. Cycle Master en Management et Commerce International (MCI) — 4 semestres (M1-S1 à M2-S4), accès sur étude de dossier et concours (Licence en Économie, Gestion, Management ou équivalent). Modules : Environnement économique international, Marketing international, Logistique internationale & Douane, Finance internationale, Droit du commerce international, Négociation commerciale internationale, Supply Chain globale, Stage & Mémoire de recherche/professionnel.
 - Démarches administratives et services numériques (UIZ / FEGT / ENSSUP) :
   - Inscription des bacheliers : préinscription en ligne sur le portail UIZ puis dépôt du dossier physique au Service de la Scolarité FEGT selon le calendrier officiel publié sur https://www.fegt.uiz.ac.ma/ et https://www.uiz.ac.ma/.
   - Certificat de scolarité et relevés de notes : demande via l'ENT MyUIZ ou guichet e-Scolarité (délai 24h à 48h ouvrables sur présentation de la carte d'étudiant).
@@ -32,28 +33,18 @@ Official Reference Data from https://www.fegt.uiz.ac.ma/, https://www.uiz.ac.ma/
   - Assurance Maladie Obligatoire des étudiants (AMO Étudiant) : inscription annuelle via l'ENT UIZ et la plateforme CNOPS.
   - Plateformes pédagogiques UIZ : Moodle UIZ (cours et supports), Rosetta Stone (compétences linguistiques et certification LMD), Espace Numérique de Travail (ENT).
   - Vie associative et clubs FEGT : ENACTUS FEG Taroudant, Hult Prize FEG Taroudant, Club Sport FEGT, Club des Ambassadeurs et de l'Orientation Pédagogique, Club Conférence et Formation.
-  - Gouvernance de la FEG Taroudant : Doyen de la Faculté : Pr. Hassan HMAYZ ; Vice-Doyen chargé de la vie de l'étudiant : Pr. Salah GACIM.
+  - Gouvernance de la FEG Taroudant : Tutelle : Le Ministère de l'Enseignement supérieur, de la Recherche scientifique et de l'Innovation & Université Ibn Zohr (UIZ) ; Doyen de la Faculté : Pr. Hassan HMAYZ ; Vice-Doyen chargé de la vie de l'étudiant : Pr. Salah GACIM ; Vice-Doyen chargé des affaires pédagogiques : Pr. Jamal AGOURAM ; Vice-Doyen chargé de la recherche scientifique et de la coopération : Pr. Moutia EL JAZOULI.
+  - Effectifs étudiants de la Faculté : 860 étudiants inscrits au total (dont 164 étudiants inscrits en Cycle Master MCI).
+  - Corps professoral permanent : 14 enseignants-chercheurs.
+  - Ville de Taroudant (Cadre de vie étudiant & Patrimoine) : Surnommée « La Petite Marrakech », ancienne capitale saadienne du Souss au XVIe siècle, entourée de 7,5 km de remparts ocres (130 tours, 19 bastions) et 5 portes historiques (Bab El Kasbah, Bab Zorgane, Bab Targhount, Bab Ouled Bounouna, Bab El Khemis), places Assarag et Talmoklate, Souk Arbaa et Souk Jnan Al Jaami. Située entre le Haut-Atlas et l'Anti-Atlas, à 80 km d'Agadir et 60 km de l'Aéroport International Al Massira. Quartiers étudiants proches du campus : Hay Lmhaita / Lastah et Hay Mohammadi. Ville plate propice au vélo, petits taxis bleus économiques et bus. Pôle économique majeur du Souss-Massa (agro-industrie, COPAG, agrumes, huile d'argan, safran, coopératives et tourisme durable) offrant des opportunités de stages et PFE aux étudiants des 3 Filières de Licence (GEMD, MGE, ENDEB) et du Cycle Master MCI.
   - Accessibilité : cellule d'accompagnement des étudiants en situation de handicap (aménagements d'examens, tiers-temps, accès prioritaire).`;
 
-export interface ChatTurn {
-  role: 'user' | 'model';
-  text: string;
-}
-
-export interface GroundingSource {
-  title: string;
-  uri: string;
-}
-
-export function buildOfficialGroundedFallback(userMessage: string): {
-  reply: string;
-  sources: GroundingSource[];
-} {
-  const q = userMessage.toLowerCase();
-  const defaultSources: GroundingSource[] = [
+export function buildOfficialGroundedFallback(userMessage = '') {
+  const q = String(userMessage || '').toLowerCase();
+  const defaultSources = [
     { title: 'FEG Taroudant — Portail Officiel', uri: 'https://www.fegt.uiz.ac.ma/' },
     { title: 'Université Ibn Zohr (UIZ)', uri: 'https://www.uiz.ac.ma/' },
-    { title: "Ministère de l'Enseignement Supérieur (ENSSUP)", uri: 'https://www.enssup.gov.ma/fr' }
+    { title: "Le Ministère de l'Enseignement supérieur, de la Recherche scientifique et de l'Innovation", uri: 'https://www.enssup.gov.ma/fr' }
   ];
 
   // 1. Détection spécifique : Problème ou question sur le chatbot
@@ -75,7 +66,7 @@ export function buildOfficialGroundedFallback(userMessage: string): {
         "- **Bourses de l'Enseignement Supérieur (MINHATY)** : [https://www.minhaty.ma/](https://www.minhaty.ma/)\n" +
         "- **Changement de Filière FEG (Plateforme ENE)** : [https://ene.fpt.ac.ma/#/login/feg?redirect=%2Ffpt%2FchangeFiliere](https://ene.fpt.ac.ma/#/login/feg?redirect=%2Ffpt%2FchangeFiliere)\n" +
         "- **Connexion Espace Numérique de Travail (ENT MyUIZ)** : [https://www.uiz.ac.ma/user/login](https://www.uiz.ac.ma/user/login)\n\n" +
-        "Vous pouvez également tester vos notes sur notre **Simulateur de Notes & Compensation** (moyenne ≥ 10/20, aucune note < 5/20) ou me poser vos questions sur les filières et inscriptions.",
+        "Vous pouvez également tester vos notes sur notre **Simulateur de Notes & Compensation** (moyenne ≥ 10/20, aucune note < 5/20) ou me poser vos questions sur les 3 filières de Licence, le cycle Master et les inscriptions.",
       sources: [
         { title: 'I.LOGHA Sup UIZ', uri: 'https://elogha-sup.uiz.ac.ma/' },
         { title: 'Portail Minhaty', uri: 'https://www.minhaty.ma/' },
@@ -211,6 +202,13 @@ export function buildOfficialGroundedFallback(userMessage: string): {
     q.includes('hassan') ||
     q.includes('gacim') ||
     q.includes('salah') ||
+    q.includes('moutia') ||
+    q.includes('jazouli') ||
+    q.includes('jamal') ||
+    q.includes('agouram') ||
+    q.includes('ministère') ||
+    q.includes('ministere') ||
+    q.includes('enssup') ||
     q.includes('gouvernance') ||
     q.includes('direction') ||
     q.includes('présentation') ||
@@ -221,11 +219,38 @@ export function buildOfficialGroundedFallback(userMessage: string): {
     return {
       reply:
         "**Présentation officielle & Gouvernance de la Faculté d'Économie et de Gestion de Taroudant (FEGT)** ([fegt.uiz.ac.ma](https://www.fegt.uiz.ac.ma/)) :\n\n" +
+        "- **Tutelle Ministérielle** : **Le Ministère de l'Enseignement supérieur, de la Recherche scientifique et de l'Innovation** ([enssup.gov.ma/fr](https://www.enssup.gov.ma/fr)) & **Université Ibn Zohr** ([uiz.ac.ma](https://www.uiz.ac.ma/)).\n" +
         "- **Doyen de la Faculté** : **Pr. Hassan HMAYZ**\n" +
         "- **Vice-Doyen chargé de la Vie de l'Étudiant** : **Pr. Salah GACIM**\n" +
-        "- **Tutelle** : Université Ibn Zohr ([uiz.ac.ma](https://www.uiz.ac.ma/)) & Ministère de l'Enseignement Supérieur ([enssup.gov.ma/fr](https://www.enssup.gov.ma/fr)).\n" +
-        "- **Chiffres clés** : 2 850+ étudiants, 4 filières accréditées (GEMD, MGE, ENDEB, Master MCI), 45+ enseignants-chercheurs et intervenants, 3 structures de recherche, 60+ doctorants et 25+ partenaires.\n" +
+        "- **Vice-Doyen chargé des Affaires Pédagogiques** : **Pr. Jamal AGOURAM**\n" +
+        "- **Vice-Doyen chargé de la Recherche Scientifique & de la Coopération** : **Pr. Moutia EL JAZOULI**\n" +
+        "- **Chiffres clés** : **860 étudiants inscrits** (dont **164 en Master MCI**), **3 Filières de Licence (GEMD, MGE, ENDEB) & 1 Cycle Master (MCI)**, **14 enseignants-chercheurs permanents**, 6 clubs étudiants.\n" +
         "- **Adresse & Horaires** : Hay Lmhaita, BP 271, 83000 Taroudant. Ouverture administrative du lundi au vendredi de **08h30 à 16h30**.",
+      sources: defaultSources
+    };
+  }
+
+  if (
+    q.includes('ville') ||
+    q.includes('city') ||
+    q.includes('rempart') ||
+    q.includes('petite marrakech') ||
+    q.includes('assarag') ||
+    q.includes('talmoklate') ||
+    q.includes('logement') ||
+    q.includes('transport') ||
+    q.includes('taxi') ||
+    q.includes('vélo') ||
+    q.includes('velo') ||
+    q.includes('تارودانت')
+  ) {
+    return {
+      reply:
+        "**Un Petit Mot sur la Ville de Taroudant — Cité Millénaire du Souss & Cadre de Vie Étudiant** :\n\n" +
+        "- **Histoire & Patrimoine (« La Petite Marrakech »)** : Ancienne capitale saadienne du Souss au XVIe siècle, entourée de **7,5 km de remparts ocres** (130 tours et 19 bastions) et de **5 portes monumentales** (*Bab El Kasbah, Bab Zorgane, Bab Targhount, Bab Ouled Bounouna, Bab El Khemis*), avec ses places historiques (*Place Assarag*, *Place Talmoklate*) et ses souks (*Souk Arbaa*, *Souk Jnan Al Jaami*).\n" +
+        "- **Vie Étudiante, Logement & Mobilité** : Ville sûre, paisible et au coût de la vie très accessible. Les quartiers étudiants proches du campus sont **Hay Lmhaita / Lastah** et **Hay Mohammadi**. Déplacements faciles à vélo (ville plate), en petits taxis bleus ou en bus.\n" +
+        "- **Connectivité** : Située entre le Haut-Atlas et l'Anti-Atlas, à **80 km d'Agadir** et **60 km de l'Aéroport International Agadir-Al Massira**.\n" +
+        "- **Économie & Stages FEGT** : Capitale agro-industrielle et coopérative (COPAG, agrumes, huile d'argan, artisanat, tourisme durable), offrant un terrain d'application privilégié pour les stages et PFE des **3 Filières de Licence (GEMD, MGE, ENDEB)** et du **Cycle Master MCI**.",
       sources: defaultSources
     };
   }
@@ -243,15 +268,17 @@ export function buildOfficialGroundedFallback(userMessage: string): {
   ) {
     return {
       reply:
-        "Conformément à l'offre de formation officielle accréditée de la **Faculté d'Économie et de Gestion de Taroudant (FEGT - UIZ)** ([fegt.uiz.ac.ma](https://www.fegt.uiz.ac.ma/)) et aux normes pédagogiques du **Ministère de l'Enseignement Supérieur (ENSSUP)** ([enssup.gov.ma/fr](https://www.enssup.gov.ma/fr)), l'établissement propose :\n\n" +
-        "1. **Licence en Gestion, E-Business et Marketing Digital (GEMD)** *(6 semestres, accès post-Baccalauréat)* : Tronc commun S1–S4 en économie et gestion, puis spécialisation S5–S6 en Marketing Digital, E-Business, E-CRM, E-Logistique, Stratégies digitales et Projet de Fin d'Études (PFE).\n" +
-        "2. **Licence en Management et Gestion des Entreprises (MGE)** *(6 semestres, accès post-Baccalauréat)* : Formation polyvalente en GRH, Contrôle de gestion, Gestion financière, Audit général, Fiscalité approfondie, ERP et PFE.\n" +
-        "3. **Licence en Entrepreneuriat et Développement des Business (ENDEB)** *(6 semestres, accès post-Baccalauréat)* : Spécialisation en Business Model, Financement des jeunes entreprises, Management de l'innovation, Création d'entreprise et PFE.\n" +
-        "4. **Master en Management et Commerce International (MCI)** *(4 semestres, accès sur concours et étude de dossier)* : Commerce international, Logistique internationale & Douane, Finance internationale, Supply Chain globale et Mémoire de recherche/stage.\n\n" +
-        "Pour changer de filière entre Licences FEG, utilisez la plateforme dédiée : [https://ene.fpt.ac.ma/#/login/feg?redirect=%2Ffpt%2FchangeFiliere](https://ene.fpt.ac.ma/#/login/feg?redirect=%2Ffpt%2FchangeFiliere).\n\n" +
-        "Vous pouvez également consulter et télécharger les fiches descriptives PDF officielles directement dans la section **Filières** de ce portail.",
+        "Conformément à l'offre de formation officielle accréditée de la **Faculté d'Économie et de Gestion de Taroudant (FEGT - UIZ)** ([fegt.uiz.ac.ma](https://www.fegt.uiz.ac.ma/)) et aux normes pédagogiques du **Ministère de l'Enseignement supérieur, de la Recherche scientifique et de l'Innovation** ([enssup.gov.ma/fr](https://www.enssup.gov.ma/fr)), l'établissement propose **3 Filières de Licence** et **1 Cycle Master** :\n\n" +
+        "**Les 3 Filières du Cycle Licence (6 semestres, accès post-Baccalauréat) :**\n" +
+        "1. **Filière Licence en Gestion, E-Business et Marketing Digital (GEMD)** : Tronc commun S1–S4 en économie et gestion, puis spécialisation S5–S6 en Marketing Digital, E-Business, E-CRM, E-Logistique, Stratégies digitales et Projet de Fin d'Études (PFE).\n" +
+        "2. **Filière Licence en Management et Gestion des Entreprises (MGE)** : Formation polyvalente en GRH, Contrôle de gestion, Gestion financière, Audit général, Fiscalité approfondie, ERP et PFE.\n" +
+        "3. **Filière Licence en Entrepreneuriat et Développement des Business (ENDEB)** : Spécialisation en Business Model, Financement des jeunes entreprises, Management de l'innovation, Création d'entreprise et PFE.\n\n" +
+        "**Le Cycle Master (4 semestres, accès sur concours et étude de dossier post-Licence) :**\n" +
+        "- **Master en Management et Commerce International (MCI)** : Commerce international, Logistique internationale & Douane, Finance internationale, Supply Chain globale et Mémoire de recherche/stage.\n\n" +
+        "Pour changer de filière entre les 3 Licences FEG, utilisez la plateforme dédiée : [https://ene.fpt.ac.ma/#/login/feg?redirect=%2Ffpt%2FchangeFiliere](https://ene.fpt.ac.ma/#/login/feg?redirect=%2Ffpt%2FchangeFiliere).\n\n" +
+        "Vous pouvez également consulter et télécharger les fiches descriptives PDF officielles directement dans la section **Filières & Master** de ce portail.",
       sources: [
-        { title: 'Filières FEGT Officielles', uri: 'https://www.fegt.uiz.ac.ma/' },
+        { title: 'Formations FEGT Officielles', uri: 'https://www.fegt.uiz.ac.ma/' },
         { title: 'Changement de Filière ENE', uri: 'https://ene.fpt.ac.ma/#/login/feg?redirect=%2Ffpt%2FchangeFiliere' },
         { title: 'Université Ibn Zohr', uri: 'https://www.uiz.ac.ma/' }
       ]
@@ -569,21 +596,29 @@ async function startServer() {
     res.status(200).send('ok');
   });
 
+  const distPath = path.resolve(__dirname, 'dist');
+  const distIndexHtml = path.join(distPath, 'index.html');
+  const rootIndexHtml = path.join(__dirname, 'index.html');
+  const publicPath = path.resolve(__dirname, 'public');
+
   const isProduction =
-    process.env.NODE_ENV === 'production' ||
-    Boolean(process.env.K_SERVICE) ||
-    process.env.npm_lifecycle_event === 'start';
+    (process.env.NODE_ENV === 'production' ||
+      process.env.npm_lifecycle_event === 'start') &&
+    fs.existsSync(distIndexHtml);
+
+  app.use(express.static(publicPath));
 
   if (isProduction) {
-    const distPath = path.resolve(__dirname, 'dist');
     app.use(express.static(distPath));
     app.get('*', (_req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+      res.sendFile(fs.existsSync(distIndexHtml) ? distIndexHtml : rootIndexHtml);
     });
   } else {
-    app.use(express.static(path.resolve(__dirname, 'public')));
+    if (fs.existsSync(distPath)) {
+      app.use(express.static(distPath));
+    }
     app.get(['/', '/index.html'], (_req, res) => {
-      res.sendFile(path.join(__dirname, 'index.html'));
+      res.sendFile(fs.existsSync(rootIndexHtml) ? rootIndexHtml : distIndexHtml);
     });
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
@@ -591,6 +626,9 @@ async function startServer() {
       appType: 'custom'
     });
     app.use(vite.middlewares);
+    app.get('*', (_req, res) => {
+      res.sendFile(fs.existsSync(rootIndexHtml) ? rootIndexHtml : distIndexHtml);
+    });
   }
 
   const PORT = Number(process.env.PORT) || 3000;
