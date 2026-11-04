@@ -20,7 +20,7 @@ Guidelines for your responses:
 - Maintain a professional, academic, and helpful tone suitable for university students, researchers, and faculty members.
 
 Official Reference Data from https://www.fegt.uiz.ac.ma/, https://www.uiz.ac.ma/, and https://www.enssup.gov.ma/fr :
-- Institution: Faculté d'Économie et de Gestion de Taroudant (FEGT), relevant de l'Université Ibn Zohr (UIZ) et du Ministère de l'Enseignement Supérieur, de la Recherche Scientifique et de l'Innovation (ENSSUP). Adresse : Hay Lmhaita, BP 271, 83000 Taroudant, Maroc.
+- Institution: Faculté d'Économie et de Gestion de Taroudant (FEGT), relevant de l'Université Ibn Zohr (UIZ) et du Ministère de l'Enseignement Supérieur, de la Recherche Scientifique et de l'Innovation (ENSSUP). Adresse : Campus Universitaire Hay Mohammadi (Lastah), B.P. 271, 83000 Taroudant — Maroc.
 - Offre de formation accréditée à la FEG Taroudant (3 Filières de Licence & 1 Cycle Master — le Master est un cycle supérieur et non une filière de Licence) :
   1. Filière Licence en Gestion, E-Business et Marketing Digital (GEMD) — 6 semestres (S1 à S6), condition d'accès : Baccalauréat. S1-S4 tronc commun (Comptabilité générale I & II, Management I & II, Microéconomie, Macroéconomie, Statistique descriptive, Probabilités, Droit commercial, Fiscalité, Analyse financière, Informatique de gestion, Marketing de base & approfondi). S5 : Marketing Digital, Fondamentaux du E-Business, Comportement du consommateur, Gestion de la force de vente, Contrôle de gestion, Management de projet. S6 : Stratégies digitales, Entrepreneuriat digital, E-CRM, E-Logistique, Anglais des affaires, Projet de Fin d'Études (PFE).
   2. Filière Licence en Management et Gestion des Entreprises (MGE) — 6 semestres (S1 à S6), condition d'accès : Baccalauréat. S1-S4 tronc commun. S5 : GRH, Contrôle de gestion, Gestion financière, Gestion de la production, Management stratégique, Droit des affaires. S6 : Audit général, Fiscalité approfondie, Entrepreneuriat, ERP, PFE.
@@ -225,7 +225,7 @@ export function buildOfficialGroundedFallback(userMessage = '') {
         "- **Vice-Doyen chargé des Affaires Pédagogiques** : **Pr. Jamal AGOURAM**\n" +
         "- **Vice-Doyen chargé de la Recherche Scientifique & de la Coopération** : **Pr. Moutia EL JAZOULI**\n" +
         "- **Chiffres clés** : **860 étudiants inscrits** (dont **164 en Master MCI**), **3 Filières de Licence (GEMD, MGE, ENDEB) & 1 Cycle Master (MCI)**, **14 enseignants-chercheurs permanents**, 6 clubs étudiants.\n" +
-        "- **Adresse & Horaires** : Hay Lmhaita, BP 271, 83000 Taroudant. Ouverture administrative du lundi au vendredi de **08h30 à 16h30**.",
+        "- **Adresse & Horaires** : Campus Universitaire Hay Mohammadi (Lastah), B.P. 271, 83000 Taroudant — Maroc. Ouverture administrative du lundi au vendredi de **08h30 à 16h30**.",
       sources: defaultSources
     };
   }
@@ -505,7 +505,7 @@ export function buildOfficialGroundedFallback(userMessage = '') {
     return {
       reply:
         "**Coordonnées officielles et Accès à la FEG Taroudant** :\n\n" +
-        "- **Adresse** : Hay Lmhaita, BP 271, 83000 Taroudant, Maroc.\n" +
+        "- **Adresse** : Campus Universitaire Hay Mohammadi (Lastah), B.P. 271, 83000 Taroudant — Maroc.\n" +
         "- **Horaires d'accueil administratif** : Du lundi au vendredi, de **08h30 à 16h30**.\n" +
         "- **Portails web officiels** :\n" +
         "  • Faculté : [https://www.fegt.uiz.ac.ma/](https://www.fegt.uiz.ac.ma/)\n" +
